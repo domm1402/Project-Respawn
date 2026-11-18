@@ -15,6 +15,9 @@
     "ios": {
       "bundleIdentifier": "com.domm1402.respawn",
       "supportsTablet": true
-    }
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }
