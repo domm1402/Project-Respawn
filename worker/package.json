@@ -1,0 +1,1 @@
+{"name":"respawn-api","private":true,"version":"1.0.0","scripts":{"dev":"wrangler dev","deploy":"wrangler deploy","migrate":"wrangler d1 migrations apply respawn-db --remote"},"devDependencies":{"@cloudflare/workers-types":"^4.20261118.0","wrangler":"^4.50.0"}}
