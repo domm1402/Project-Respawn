@@ -256,3 +256,12 @@ export async function createVoiceRoom(input: { name: string; community_id?: stri
   if (error) throw error;
   return data;
 }
+
+
+export async function searchPlayers(query: string) {
+  const term = query.trim().replace(/[,%]/g, "");
+  if (term.length < 2) return [];
+  const { data, error } = await db().from("profiles").select("id, username, display_name, avatar_url").or("username.ilike.%"+term+"%,display_name.ilike.%"+term+"%").limit(20);
+  if (error) throw error;
+  return data;
+}
