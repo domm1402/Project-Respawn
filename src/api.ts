@@ -120,34 +120,48 @@ export const connectXbox = async () => {
 export const connectMinecraft = async () => {
   const microsoft = await getMicrosoftAccessToken();
   const xbox = await getXboxIdentity(microsoft.accessToken, "rp://api.minecraftservices.com/");
-  const minecraftLogin = await fetch("https://api.minecraftservices.com/authentication/login_with_xbox", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ identityToken: "XBL3.0 x=" + xbox.userHash + ";" + xbox.token })
-  });
-  const minecraftTokens = await minecraftLogin.json();
-  if (!minecraftLogin.ok || !minecraftTokens.access_token) {
-    throw new Error("Microsoft sign-in worked, but Minecraft authentication failed. Make sure this Microsoft account owns Minecraft.");
+  let accountId = xbox.xuid || xbox.userHash;
+  let displayName = "Minecraft player";
+  let minecraftAccessToken = xbox.token;
+
+  // If this Microsoft account also has a Java Edition profile, use its official Minecraft profile.
+  // Xbox/Bedrock-linked accounts can still be represented by their Xbox identity.
+  try {
+    const minecraftLogin = await fetch("https://api.minecraftservices.com/authentication/login_with_xbox", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identityToken: "XBL3.0 x=" + xbox.userHash + ";" + xbox.token })
+    });
+    const minecraftTokens = await minecraftLogin.json();
+    if (minecraftLogin.ok && minecraftTokens.access_token) {
+      const profileResponse = await fetch("https://api.minecraftservices.com/minecraft/profile", {
+        headers: { "Authorization": "Bearer " + minecraftTokens.access_token }
+      });
+      const profile = await profileResponse.json();
+      if (profileResponse.ok && profile.id && profile.name) {
+        accountId = profile.id;
+        displayName = profile.name;
+        minecraftAccessToken = minecraftTokens.access_token;
+      }
+    }
+  } catch {
+    // Keep the verified Microsoft/Xbox identity for Bedrock-linked accounts.
   }
-  const entitlementsResponse = await fetch("https://api.minecraftservices.com/entitlements/mcstore", {
-    headers: { "Authorization": "Bearer " + minecraftTokens.access_token }
-  });
-  const entitlements = await entitlementsResponse.json();
-  if (!entitlementsResponse.ok || !Array.isArray(entitlements.items) || entitlements.items.length === 0) {
-    throw new Error("This Microsoft account does not appear to have Minecraft Java entitlements. Check that you signed into the account that owns Minecraft.");
+
+  if (displayName === "Minecraft player" && xbox.xuid) {
+    try {
+      const xboxProfileResponse = await fetch("https://profile.xboxlive.com/users/xuid(" + xbox.xuid + ")/profile/settings?settings=Gamertag", {
+        headers: { "x-xbl-contract-version": "2", "Authorization": "XBL3.0 x=" + xbox.userHash + ";" + xbox.token }
+      });
+      const xboxProfile = await xboxProfileResponse.json();
+      displayName = xboxProfile.profileUsers?.[0]?.settings?.find((item: any) => item.id === "Gamertag")?.value || "Minecraft player";
+    } catch {}
   }
-  const profileResponse = await fetch("https://api.minecraftservices.com/minecraft/profile", {
-    headers: { "Authorization": "Bearer " + minecraftTokens.access_token }
-  });
-  const profile = await profileResponse.json();
-  if (!profileResponse.ok || !profile.id || !profile.name) {
-    throw new Error("Minecraft authentication succeeded, but no Minecraft profile was found for this account.");
-  }
+
   await storePlatformAccount({
-    provider: "minecraft", accountId: profile.id, displayName: profile.name,
-    accessToken: minecraftTokens.access_token, refreshToken: microsoft.refreshToken,
-    expiresAt: Date.now() + (Number(minecraftTokens.expires_in) || 0) * 1000
+    provider: "minecraft", accountId: String(accountId), displayName,
+    accessToken: minecraftAccessToken, refreshToken: microsoft.refreshToken
   });
-  return { provider: "minecraft", accountId: profile.id, displayName: profile.name };
+  return { provider: "minecraft", accountId: String(accountId), displayName };
 };
 export const listPlatformConnections=()=>apiRequest("/api/platform-connections");
 export const listDirectConversations=()=>apiRequest("/api/direct-conversations");
