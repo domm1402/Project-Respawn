@@ -39,7 +39,7 @@ export const connectSteam = async () => {
   const result = await WebBrowser.openAuthSessionAsync("https://steamcommunity.com/openid/login?" + params.toString(), steamReturnUrl);
   if (result.type !== "success" || !result.url) throw new Error("Steam sign-in was cancelled.");
   const returned = new URL(result.url);
-  const steamId = returned.searchParams.get("openid.claimed_id")?.match(/\\/id\\/(\\d+)$/)?.[1];
+  const steamId = returned.searchParams.get("openid.claimed_id")?.match(/\/id\/(\d+)$/)?.[1];
   if (!steamId || returned.searchParams.get("openid.mode") !== "id_res") throw new Error("Steam did not return a valid account identity.");
   const verification = new URLSearchParams();
   returned.searchParams.forEach((value, key) => { if (key.startsWith("openid.")) verification.append(key, value); });
