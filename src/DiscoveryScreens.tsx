@@ -2,8 +2,9 @@ import React,{useState} from "react";
 import {ActivityIndicator,Linking,Pressable,StyleSheet,Text,TextInput,View} from "react-native";
 import * as SecureStore from "expo-secure-store";
 import {Gamepad2,Search,Plus} from "lucide-react-native";
+import { theme } from "./theme";
 
-const C={bg:"#090910",panel:"#12121D",panel2:"#191927",line:"#29283A",text:"#F5F3FF",muted:"#9290A8",purple:"#8B5CF6",lav:"#B9A0FF",green:"#4BD49A"};
+const C=theme.colors;
 const STEAM_KEY="respawn_steam_web_api_key_v1";
 type Game={appid:number;name:string;playtime_forever:number;img_icon_url?:string};
 const platforms=["Steam","Xbox","Epic Games","PlayStation","Nintendo"];
@@ -52,3 +53,28 @@ export function GameAccountFinder({onAddGames}:{onAddGames:(names:string[])=>voi
   {games.length>0?<><Text style={s.subheading}>PUBLIC LIBRARY · {games.length} GAMES</Text>{games.slice(0,80).map(g=><View key={g.appid} style={s.game}><View style={{flex:1}}><Text style={s.gameName}>{g.name}</Text><Text style={s.tiny}>{Math.round((g.playtime_forever||0)/60)} hours played</Text></View><Pressable onPress={()=>onAddGames([g.name])} style={s.add}><Plus color={C.lav} size={15}/><Text style={s.addText}>ADD</Text></Pressable></View>)}<Pressable onPress={()=>onAddGames(games.map(g=>g.name))} style={s.secondary}><Text style={s.secondaryText}>Add all {games.length} games to my vault</Text></Pressable></>:null}
  </View>
 }
+
+const s=StyleSheet.create({
+ panel:{backgroundColor:C.panel,borderWidth:1,borderColor:C.line,borderRadius:15,padding:13,gap:11,marginTop:10},
+ row:{flexDirection:"row",alignItems:"center",gap:8},
+ heading:{fontSize:13,fontWeight:"900",color:C.text},
+ muted:{fontSize:9,color:C.muted,lineHeight:14},
+ chips:{flexDirection:"row",flexWrap:"wrap",gap:6},
+ chip:{paddingHorizontal:10,paddingVertical:7,borderRadius:18,backgroundColor:C.panel2,borderWidth:1,borderColor:C.line},
+ chipOn:{backgroundColor:C.purple+"30",borderColor:C.purple},
+ chipText:{fontSize:9,color:C.muted,fontWeight:"800"},
+ chipTextOn:{color:C.lav},
+ input:{height:42,borderRadius:10,backgroundColor:C.panel2,borderWidth:1,borderColor:C.line,color:C.text,paddingHorizontal:11,fontSize:10},
+ tiny:{fontSize:8,color:C.muted,lineHeight:12},
+ primary:{height:42,borderRadius:10,backgroundColor:C.purple,alignItems:"center",justifyContent:"center",flexDirection:"row",gap:7},
+ primaryText:{fontSize:10,color:"#fff",fontWeight:"900"},
+ error:{fontSize:9,color:C.red,lineHeight:14},
+ note:{fontSize:9,color:C.green,lineHeight:14},
+ subheading:{fontSize:8,color:C.lav,fontWeight:"900",letterSpacing:1,marginTop:4},
+ game:{flexDirection:"row",alignItems:"center",paddingVertical:8,borderTopWidth:1,borderTopColor:C.line},
+ gameName:{fontSize:10,color:C.text,fontWeight:"800"},
+ add:{flexDirection:"row",alignItems:"center",gap:4,padding:8,backgroundColor:C.panel2,borderRadius:8},
+ addText:{fontSize:8,color:C.lav,fontWeight:"900"},
+ secondary:{padding:11,alignItems:"center",borderRadius:9,borderWidth:1,borderColor:C.line},
+ secondaryText:{fontSize:9,color:C.text,fontWeight:"800"}
+});
