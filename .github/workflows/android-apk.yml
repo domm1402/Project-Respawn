@@ -8,6 +8,8 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    env:
+      EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
