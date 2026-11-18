@@ -82,3 +82,12 @@ for insert to authenticated with check (
     or (guild_id is not null and exists (select 1 from public.guilds g where g.id = voice_rooms.guild_id and g.owner_id = auth.uid()))
   )
 );
+
+drop policy if exists "Community moderators create voice rooms" on public.voice_rooms;
+create policy "Community moderators or guild members create voice rooms" on public.voice_rooms
+for insert to authenticated with check (
+  created_by = auth.uid() and (
+    (community_id is not null and public.is_community_moderator(community_id))
+    or (guild_id is not null and exists (select 1 from public.guild_members gm where gm.guild_id = voice_rooms.guild_id and gm.profile_id = auth.uid()))
+  )
+);
