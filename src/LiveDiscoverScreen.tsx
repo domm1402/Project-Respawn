@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { createEvent, createGuild, createPost, joinCommunity, joinGuild, listCommunities, listEvents, listFeed, listGuilds, rsvpEvent } from "./api";
+import { createEvent, createGuild, createPost, createVoiceRoom, joinCommunity, joinGuild, listCommunities, listEvents, listFeed, listGuilds, rsvpEvent } from "./api";
+import VoiceRoomScreen from "./VoiceRoomScreen";
 
 type Row = Record<string, any>;
 const stamp = (date: string) => new Date(date).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -16,6 +17,7 @@ export default function LiveDiscoverScreen() {
   const [eventDraft, setEventDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [voiceRoomId, setVoiceRoomId] = useState("");
 
   const refresh = useCallback(async () => {
     try {
@@ -31,6 +33,8 @@ export default function LiveDiscoverScreen() {
     catch (e) { setError(e instanceof Error ? e.message : "That action failed."); }
     finally { setBusy(false); }
   }
+
+  if (voiceRoomId) return <VoiceRoomScreen initialRoomId={voiceRoomId} onBack={() => setVoiceRoomId("")} />;
 
   const tabs = ["Feed", "Guilds", "Events", "Communities"];
   return <ScrollView style={styles.root} contentContainerStyle={styles.content}>
@@ -49,7 +53,7 @@ export default function LiveDiscoverScreen() {
     {section === "Guilds" ? <>
       <Text style={styles.label}>Create a guild</Text>
       <View style={styles.inline}><TextInput value={guildDraft} onChangeText={setGuildDraft} placeholder="Guild name" placeholderTextColor="#89879C" style={styles.inputInline} /><Pressable disabled={busy || guildDraft.trim().length < 3} onPress={() => run(async () => { await createGuild({ name: guildDraft.trim(), description: "A new Respawn guild" }); setGuildDraft(""); })} style={styles.primary}><Text style={styles.primaryText}>Create</Text></Pressable></View>
-      {guilds.map(g => <View key={g.id} style={styles.card}><Text style={styles.name}>{g.name}</Text><Text style={styles.meta}>{g.region || "All regions"} · {g.recruiting ? "Recruiting" : "Closed"}</Text><Text style={styles.body}>{g.description || "No description yet."}</Text><Pressable onPress={() => run(() => joinGuild(g.id))} style={styles.secondary}><Text style={styles.secondaryText}>Join guild</Text></Pressable></View>)}
+      {guilds.map(g => <View key={g.id} style={styles.card}><Text style={styles.name}>{g.name}</Text><Text style={styles.meta}>{g.region || "All regions"} · {g.recruiting ? "Recruiting" : "Closed"}</Text><Text style={styles.body}>{g.description || "No description yet."}</Text><View style={styles.inline}><Pressable onPress={() => run(() => joinGuild(g.id))} style={styles.secondary}><Text style={styles.secondaryText}>Join guild</Text></Pressable><Pressable onPress={() => run(async () => { const room = await createVoiceRoom({ guild_id: g.id, name: g.name + " Voice" }); setVoiceRoomId(room.id); })} style={styles.secondary}><Text style={styles.secondaryText}>Create voice room</Text></Pressable></View></View>)}
       {!guilds.length ? <Text style={styles.empty}>No guilds yet. Create the first one.</Text> : null}
     </> : null}
 
