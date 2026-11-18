@@ -77,6 +77,33 @@ create table if not exists public.community_members (
   primary key (community_id, profile_id)
 );
 
+-- Owners are automatically inserted into their own rosters.
+create or replace function public.add_community_owner_membership()
+returns trigger language plpgsql security definer set search_path = public
+as $ begin
+  insert into public.community_members (community_id, profile_id, role)
+  values (new.id, new.owner_id, 'owner')
+  on conflict (community_id, profile_id) do nothing;
+  return new;
+end $;
+
+create or replace function public.add_guild_owner_membership()
+returns trigger language plpgsql security definer set search_path = public
+as $ begin
+  insert into public.guild_members (guild_id, profile_id, role)
+  values (new.id, new.owner_id, 'leader')
+  on conflict (guild_id, profile_id) do nothing;
+  return new;
+end $;
+
+create trigger community_owner_membership
+after insert on public.communities
+for each row execute function public.add_community_owner_membership();
+
+create trigger guild_owner_membership
+after insert on public.guilds
+for each row execute function public.add_guild_owner_membership();
+
 create table if not exists public.channels (
   id uuid primary key default gen_random_uuid(),
   community_id uuid not null references public.communities(id) on delete cascade,
