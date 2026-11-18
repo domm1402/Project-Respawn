@@ -239,6 +239,7 @@ function MessagesScreen() {
 }
 
 function ProfileScreen() {
+  const { signOut } = useAuth();
   const [following, setFollowing] = useState(false);
   const [connections, setConnections] = useState<Record<string, any>>({});
   const [playerProfile, setPlayerProfile] = useState<any>(null);
@@ -254,11 +255,11 @@ function ProfileScreen() {
     const deepLink = Linking.addEventListener("url", refreshConnections);
     return () => { appState.remove(); deepLink.remove(); };
   }, []);
-  async function connect(provider: "steam" | "xbox") {
+  async function connect(provider: "steam" | "xbox" | "minecraft") {
     try {
-      const account = provider === "steam" ? await connectSteam() : await connectXbox();
-      setConnections(old => ({ ...old, [provider]: { provider, provider_user_id: account.accountId, display_name: account.displayName || (provider === "steam" ? "Steam " + account.accountId : "Xbox player") } }));
-      Alert.alert("Account connected", (account.displayName || provider) + " is now saved securely on this device.");
+      const account = provider === "steam" ? await connectSteam() : provider === "minecraft" ? await connectMinecraft() : await connectXbox();
+      setConnections(old => ({ ...old, [provider]: { provider, provider_user_id: account.accountId, display_name: account.displayName || (provider === "steam" ? "Steam " + account.accountId : provider === "minecraft" ? "Minecraft player" : "Xbox player") } }));
+      Alert.alert("Account connected", ((account as any).displayName || provider) + " is now saved securely on this device.");
     } catch (error) {
       Alert.alert("Connection unavailable", error instanceof Error ? error.message : "Could not complete account connection.");
     }
@@ -270,8 +271,8 @@ function ProfileScreen() {
     <SectionTitle title="Connected platforms" />
     {[
       { name: "Xbox", provider: "xbox", action: () => connect("xbox") },
+      { name: "Minecraft", provider: "minecraft", action: () => connect("minecraft") },
       { name: "Steam", provider: "steam", action: () => connect("steam") },
-      { name: "Epic Games", provider: "epic", action: undefined },
       { name: "Epic Games", provider: "epic", action: undefined }
     ].map(item => {
       const linked = connections[item.provider];
