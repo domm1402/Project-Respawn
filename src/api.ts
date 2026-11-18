@@ -128,3 +128,60 @@ export async function sendFriendRequest(addresseeId: string) {
   const { error } = await client.from("friendships").insert({ requester_id: user.id, addressee_id: addresseeId });
   if (error) throw error;
 }
+
+
+export async function createDirectConversation(participantIds: string[], title?: string) {
+  const client = db();
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) throw new Error("Sign in first.");
+  const { data: conversation, error } = await client.from("direct_conversations")
+    .insert({ created_by: user.id, title: title ?? null, is_group: participantIds.length > 1 })
+    .select().single();
+  if (error) throw error;
+  const uniqueIds = [...new Set(participantIds)].filter(id => id !== user.id);
+  if (uniqueIds.length) {
+    const { error: membersError } = await client.from("direct_conversation_members")
+      .insert(uniqueIds.map(profile_id => ({ conversation_id: conversation.id, profile_id })));
+    if (membersError) throw membersError;
+  }
+  return conversation;
+}
+
+export async function listDirectMessages(conversationId: string) {
+  const { data, error } = await db().from("direct_messages").select("*, profiles(username, display_name, avatar_url)")
+    .eq("conversation_id", conversationId).order("created_at", { ascending: true }).limit(100);
+  if (error) throw error;
+  return data;
+}
+
+export async function sendDirectMessage(conversationId: string, body: string) {
+  const client = db();
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) throw new Error("Sign in first.");
+  const { data, error } = await client.from("direct_messages")
+    .insert({ conversation_id: conversationId, author_id: user.id, body }).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export function subscribeToDirectMessages(conversationId: string, onMessage: (message: unknown) => void) {
+  const client = db();
+  const channel = client.channel("direct:" + conversationId)
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "direct_messages", filter: "conversation_id=eq." + conversationId }, payload => onMessage(payload.new))
+    .subscribe();
+  return () => { void client.removeChannel(channel); };
+}
+
+export async function requestVoiceToken(roomId: string) {
+  const { data, error } = await db().functions.invoke("voice-token", { body: { room_id: roomId } });
+  if (error) throw error;
+  if (!data?.token || !data?.url) throw new Error("Voice service is not configured. Deploy the LiveKit token function first.");
+  return data as { token: string; url: string };
+}
+
+export async function connectSteam() {
+  const { data, error } = await db().functions.invoke("steam-openid", { body: { action: "begin" } });
+  if (error) throw error;
+  if (!data?.url) throw new Error("Steam sign-in is not deployed or configured.");
+  return data.url as string;
+}
