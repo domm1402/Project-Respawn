@@ -160,10 +160,11 @@ function GamesScreen() {
   const shown = games.filter(g => g.name.toLowerCase().includes(query.toLowerCase()));
 
   async function refreshConnections() {
-    if (!backendConfigured) return;
     try {
-      const rows = await listPlatformConnections();
-      setConnections(Object.fromEntries(rows.map((row: any) => [row.provider, row])));
+      const rows = await getStoredPlatformAccounts();
+      setConnections(Object.fromEntries(rows.map((row: any) => [row.provider, {
+        provider: row.provider, provider_user_id: row.accountId, display_name: row.displayName
+      }])));
     } catch {}
   }
 
@@ -179,8 +180,12 @@ function GamesScreen() {
   async function connectAccount(provider: "steam" | "xbox") {
     try {
       setConnecting(provider);
-      const url = provider === "steam" ? await connectSteam() : await connectXbox();
-      await Linking.openURL(url);
+      const account = provider === "steam" ? await connectSteam() : await connectXbox();
+      setConnections(old => ({ ...old, [provider]: {
+        provider, provider_user_id: account.accountId,
+        display_name: account.displayName || (provider === "steam" ? "Steam " + account.accountId : "Xbox player")
+      } }));
+      Alert.alert("Account connected", (account.displayName || provider) + " is saved securely on this device.");
     } catch (error) {
       Alert.alert("Could not connect account", error instanceof Error ? error.message : "Please try again.");
     } finally {
@@ -200,7 +205,7 @@ function GamesScreen() {
     <Text style={s.eyebrow}>YOUR GAMING ACCOUNTS</Text><Text style={s.heading}>Accounts & games</Text>
     <View style={s.libraryHero}><Gamepad2 color={C.purple2} size={25} /><View style={{ flex: 1 }}><Text style={s.cardTitle}>One place for your platforms</Text><Text style={s.smallMuted}>Connect accounts to bring your gaming identity into Respawn.</Text></View><Link2 color={C.purple2} size={20} /></View>
     <SectionTitle title="Connect your accounts" />
-    {!backendConfigured ? <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Deploy the Respawn API first. Then you can securely connect supported platforms here.</Text></View> : null}
+    
     {platforms.map(item => {
       const linked = connections[item.provider];
       return <View key={item.provider} style={s.platformRow}>
@@ -209,7 +214,7 @@ function GamesScreen() {
           <Text style={s.platformName}>{item.name}</Text>
           <Text style={s.smallMuted}>{linked ? linked.display_name || "Account connected" : item.detail}</Text>
         </View>
-        {item.supported ? <Pressable disabled={!!connecting || !backendConfigured} onPress={() => connectAccount(item.provider as "steam" | "xbox")} style={[s.joinSmall, (!backendConfigured || connecting === item.provider) && { opacity: 0.5 }]}>
+        {item.supported ? <Pressable disabled={!!connecting} onPress={() => connectAccount(item.provider as "steam" | "xbox")} style={[s.joinSmall, (connecting === item.provider) && { opacity: 0.5 }]}>
           <Text style={s.joinSmallText}>{connecting === item.provider ? "Opening..." : linked ? "Reconnect" : "Sign in"}</Text>
         </Pressable> : <View style={s.notConnected}><CircleDot color={C.muted} size={12} /><Text style={s.notConnectedText}>Not available yet</Text></View>}
       </View>;
