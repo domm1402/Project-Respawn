@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AuthGate, { useAuth } from "./src/AuthGate";
-import { connectSteam, connectXbox, getMyProfile } from "./src/api";
+import { connectSteam, connectXbox, connectMinecraft, getMyProfile } from "./src/api";
 import { getStoredPlatformAccounts, removePlatformAccount } from "./src/platformAccounts";
 import { backendConfigured } from "./src/backend";
 import LiveMessagingScreen from "./src/LiveMessagingScreen";
@@ -177,13 +177,13 @@ function GamesScreen() {
     return () => { appState.remove(); deepLink.remove(); };
   }, []);
 
-  async function connectAccount(provider: "steam" | "xbox") {
+  async function connectAccount(provider: "steam" | "xbox" | "minecraft") {
     try {
       setConnecting(provider);
-      const account = provider === "steam" ? await connectSteam() : await connectXbox();
+      const account = provider === "steam" ? await connectSteam() : provider === "minecraft" ? await connectMinecraft() : await connectXbox();
       setConnections(old => ({ ...old, [provider]: {
         provider, provider_user_id: account.accountId,
-        display_name: account.displayName || (provider === "steam" ? "Steam " + account.accountId : "Xbox player")
+        display_name: account.displayName || (provider === "steam" ? "Steam " + account.accountId : provider === "minecraft" ? "Minecraft player" : "Xbox player")
       } }));
       Alert.alert("Account connected", (account.displayName || provider) + " is saved securely on this device.");
     } catch (error) {
@@ -194,7 +194,8 @@ function GamesScreen() {
   }
 
   const platforms = [
-    { name: "Xbox", provider: "xbox", supported: true, detail: "Microsoft / Xbox profile" },
+    { name: "Xbox", provider: "xbox", supported: true, detail: "Microsoft account / Xbox profile" },
+    { name: "Minecraft", provider: "minecraft", supported: true, detail: "Microsoft account / Minecraft profile" },
     { name: "Steam", provider: "steam", supported: true, detail: "Steam account identity" },
     { name: "Epic Games", provider: "epic", supported: false, detail: "Integration not configured yet" }
   ];
@@ -212,12 +213,12 @@ function GamesScreen() {
           <Text style={s.platformName}>{item.name}</Text>
           <Text style={s.smallMuted}>{linked ? linked.display_name || "Account connected" : item.detail}</Text>
         </View>
-        {item.supported ? <Pressable disabled={!!connecting} onPress={() => connectAccount(item.provider as "steam" | "xbox")} style={[s.joinSmall, (connecting === item.provider) && { opacity: 0.5 }]}>
+        {item.supported ? <Pressable disabled={!!connecting} onPress={() => connectAccount(item.provider as "steam" | "xbox" | "minecraft")} style={[s.joinSmall, (connecting === item.provider) && { opacity: 0.5 }]}>
           <Text style={s.joinSmallText}>{connecting === item.provider ? "Opening..." : linked ? "Reconnect" : "Sign in"}</Text>
         </Pressable> : <View style={s.notConnected}><CircleDot color={C.muted} size={12} /><Text style={s.notConnectedText}>Not available yet</Text></View>}
       </View>;
     })}
-    <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Sign in on the official provider page. Respawn never asks for or stores your Xbox or Steam password. Epic Games sign-in will be enabled when its official integration is configured.</Text></View>
+    <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Steam uses Steam sign-in. Xbox and Minecraft use the official Microsoft sign-in page. Respawn never asks for or stores your gaming passwords.</Text></View>
     <SectionTitle title="Your game library" />
     <View style={s.searchBox}><Search color={C.muted} size={19} /><TextInput value={query} onChangeText={setQuery} placeholder="Search your games..." placeholderTextColor={C.muted} style={s.searchInput} /></View>
     {shown.map(g => <View key={g.name} style={s.libraryRow}><GameTile game={g} compact /><Pressable onPress={() => setSaved(old => old.includes(g.name) ? old.filter(x => x !== g.name) : [...old, g.name])} style={[s.saveButton, saved.includes(g.name) && s.savedButton]}><Text style={s.saveButtonText}>{saved.includes(g.name) ? "Added" : "Add"}</Text></Pressable></View>)}
