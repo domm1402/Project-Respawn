@@ -1,11 +1,11 @@
 import React,{useEffect,useState} from "react";
 import {ActivityIndicator,Pressable,SafeAreaView,StyleSheet,Text,TextInput,View} from "react-native";
 import {apiRequest,backendConfigured,getAccessToken,setAccessToken} from "./backend";
-export default function AuthGate({children}:React.PropsWithChildren){
+export const AuthContext=React.createContext<{signOut:()=>Promise<void>}>({signOut:async()=>{}});\nexport const useAuth=()=>React.useContext(AuthContext);\nexport default function AuthGate({children}:React.PropsWithChildren){
  const [ok,setOk]=useState(false),[mode,setMode]=useState<"signin"|"signup">("signin"),[email,setEmail]=useState(""),[password,setPassword]=useState(""),[username,setUsername]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState("");
  useEffect(()=>{let live=true;getAccessToken().then(async t=>{if(!t||!backendConfigured)return;try{await apiRequest("/auth/me");if(live)setOk(true)}catch{await setAccessToken(null)}});return()=>{live=false}},[]);
  async function submit(){setBusy(true);setError("");try{const r=await apiRequest<{token:string}>(mode==="signup"?"/auth/signup":"/auth/login",{method:"POST",body:JSON.stringify({email:email.trim().toLowerCase(),password,username:username.trim()})});await setAccessToken(r.token);setOk(true)}catch(e){setError(e instanceof Error?e.message:"Sign-in failed.")}finally{setBusy(false)}}
- if(ok)return <>{children}</>;
+ if(ok)return <AuthContext.Provider value={{signOut:async()=>{await setAccessToken(null);setOk(false)}}}>{children}</AuthContext.Provider>;
  return <SafeAreaView style={s.safe}><View style={s.card}><Text style={s.brand}>RESPAWN</Text><Text style={s.title}>{mode==="signin"?"Welcome back":"Create your player account"}</Text><Text style={s.sub}>One account. Every game. Your community.</Text>
  {!backendConfigured?<Text style={s.error}>Respawn's API URL is not set. Follow docs/SETUP_BACKEND.md.</Text>:null}
  {mode==="signup"?<TextInput value={username} onChangeText={setUsername} autoCapitalize="none" placeholder="Username" placeholderTextColor="#89879C" style={s.input}/>:null}
