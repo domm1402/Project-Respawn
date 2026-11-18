@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.voice-token]
 verify_jwt = true
+
+[functions.xbox-oauth]
+verify_jwt = false
