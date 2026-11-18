@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AuthGate from "./src/AuthGate";
 import { connectSteam, connectXbox, getMyProfile, listPlatformConnections } from "./src/api";
-import { backendConfigured, supabase } from "./src/backend";
+import { backendConfigured, setAccessToken } from "./src/backend";
 import LiveMessagingScreen from "./src/LiveMessagingScreen";
 import LiveDiscoverScreen from "./src/LiveDiscoverScreen";
 import { registerGlobals } from "@livekit/react-native";
@@ -199,7 +199,7 @@ function GamesScreen() {
     <Text style={s.eyebrow}>YOUR GAMING ACCOUNTS</Text><Text style={s.heading}>Accounts & games</Text>
     <View style={s.libraryHero}><Gamepad2 color={C.purple2} size={25} /><View style={{ flex: 1 }}><Text style={s.cardTitle}>One place for your platforms</Text><Text style={s.smallMuted}>Connect accounts to bring your gaming identity into Respawn.</Text></View><Link2 color={C.purple2} size={20} /></View>
     <SectionTitle title="Connect your accounts" />
-    {!backendConfigured ? <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Set up the Supabase backend first. Then you can securely sign in to supported platforms here.</Text></View> : null}
+    {!backendConfigured ? <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Deploy the Respawn API first. Then you can securely connect supported platforms here.</Text></View> : null}
     {platforms.map(item => {
       const linked = connections[item.provider];
       return <View key={item.provider} style={s.platformRow}>
@@ -275,7 +275,7 @@ function ProfileScreen() {
       </View>;
     })}
     <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Xbox and Steam use server-side identity verification. PlayStation's consumer game-library API is not generally available, so automatic PSN linking requires official partner access.</Text></View>
-    {supabase ? <Pressable onPress={() => void supabase?.auth.signOut()} style={s.secondarySignOut}><Text style={s.secondarySignOutText}>Sign out</Text></Pressable> : null}
+    {backendConfigured ? <Pressable onPress={() => void setAccessToken(null).then(() => Alert.alert("Signed out", "Restart Respawn to return to the sign-in screen."))} style={s.secondarySignOut}><Text style={s.secondarySignOutText}>Sign out</Text></Pressable> : null}
   </ScrollView>;
 }
 
