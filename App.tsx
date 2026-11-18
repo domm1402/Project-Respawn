@@ -154,17 +154,71 @@ function DiscoverScreen() {
 function GamesScreen() {
   const [saved, setSaved] = useState<string[]>(["Fortnite", "Minecraft"]);
   const [query, setQuery] = useState("");
+  const [connections, setConnections] = useState<Record<string, any>>({});
+  const [connecting, setConnecting] = useState<string | null>(null);
   const shown = games.filter(g => g.name.toLowerCase().includes(query.toLowerCase()));
+
+  async function refreshConnections() {
+    if (!backendConfigured) return;
+    try {
+      const rows = await listPlatformConnections();
+      setConnections(Object.fromEntries(rows.map(row => [row.provider, row])));
+    } catch {}
+  }
+
+  useEffect(() => {
+    refreshConnections();
+    const appState = AppState.addEventListener("change", state => {
+      if (state === "active") refreshConnections();
+    });
+    const deepLink = Linking.addEventListener("url", () => refreshConnections());
+    return () => { appState.remove(); deepLink.remove(); };
+  }, []);
+
+  async function connectAccount(provider: "steam" | "xbox") {
+    try {
+      setConnecting(provider);
+      const url = provider === "steam" ? await connectSteam() : await connectXbox();
+      await Linking.openURL(url);
+    } catch (error) {
+      Alert.alert("Could not connect account", error instanceof Error ? error.message : "Please try again.");
+    } finally {
+      setConnecting(null);
+    }
+  }
+
+  const platforms = [
+    { name: "Xbox", provider: "xbox", supported: true, detail: "Microsoft / Xbox profile" },
+    { name: "Steam", provider: "steam", supported: true, detail: "Steam account identity" },
+    { name: "PlayStation Network", provider: "playstation", supported: false, detail: "Official Sony partner access required" },
+    { name: "Epic Games", provider: "epic", supported: false, detail: "Integration not configured yet" },
+    { name: "Nintendo", provider: "nintendo", supported: false, detail: "Integration not configured yet" }
+  ];
+
   return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-    <Text style={s.eyebrow}>YOUR COLLECTION</Text><Text style={s.heading}>My games</Text>
-    <View style={s.libraryHero}><Gamepad2 color={C.purple2} size={25} /><View style={{ flex: 1 }}><Text style={s.cardTitle}>Your gaming library</Text><Text style={s.smallMuted}>{saved.length} games saved to your collection</Text></View><Bookmark color={C.purple2} size={20} /></View>
+    <Text style={s.eyebrow}>YOUR GAMING ACCOUNTS</Text><Text style={s.heading}>Accounts & games</Text>
+    <View style={s.libraryHero}><Gamepad2 color={C.purple2} size={25} /><View style={{ flex: 1 }}><Text style={s.cardTitle}>One place for your platforms</Text><Text style={s.smallMuted}>Connect accounts to bring your gaming identity into Respawn.</Text></View><Link2 color={C.purple2} size={20} /></View>
+    <SectionTitle title="Connect your accounts" />
+    {!backendConfigured ? <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Set up the Supabase backend first. Then you can securely sign in to supported platforms here.</Text></View> : null}
+    {platforms.map(item => {
+      const linked = connections[item.provider];
+      return <View key={item.provider} style={s.platformRow}>
+        <View style={s.platformIcon}><Gamepad color={C.purple2} size={19} /></View>
+        <View style={{ flex: 1 }}>
+          <Text style={s.platformName}>{item.name}</Text>
+          <Text style={s.smallMuted}>{linked ? linked.display_name || "Account connected" : item.detail}</Text>
+        </View>
+        {item.supported ? <Pressable disabled={!!connecting || !backendConfigured} onPress={() => connectAccount(item.provider as "steam" | "xbox")} style={[s.joinSmall, (!backendConfigured || connecting === item.provider) && { opacity: 0.5 }]}>
+          <Text style={s.joinSmallText}>{connecting === item.provider ? "Opening..." : linked ? "Reconnect" : "Sign in"}</Text>
+        </Pressable> : <View style={s.notConnected}><CircleDot color={C.muted} size={12} /><Text style={s.notConnectedText}>Not available yet</Text></View>}
+      </View>;
+    })}
+    <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Sign in on the official provider page. Respawn never asks for or stores your Xbox or Steam password. PlayStation, Epic and Nintendo buttons will be enabled only when supported official sign-in integrations are ready.</Text></View>
+    <SectionTitle title="Your game library" />
     <View style={s.searchBox}><Search color={C.muted} size={19} /><TextInput value={query} onChangeText={setQuery} placeholder="Search your games..." placeholderTextColor={C.muted} style={s.searchInput} /></View>
-    <SectionTitle title="Game catalogue" action="Add a game" />
     {shown.map(g => <View key={g.name} style={s.libraryRow}><GameTile game={g} compact /><Pressable onPress={() => setSaved(old => old.includes(g.name) ? old.filter(x => x !== g.name) : [...old, g.name])} style={[s.saveButton, saved.includes(g.name) && s.savedButton]}><Text style={s.saveButtonText}>{saved.includes(g.name) ? "Added" : "Add"}</Text></Pressable></View>)}
-    <View style={s.infoNote}><Link2 color={C.purple2} size={17} /><Text style={s.infoText}>Account linking will be added in a later milestone. No platform passwords are requested here.</Text></View>
   </ScrollView>;
 }
-
 function MessagesScreen() {
   const [selected, setSelected] = useState("All");
   const [draft, setDraft] = useState("");
