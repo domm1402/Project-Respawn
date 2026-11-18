@@ -1,8 +1,9 @@
 import React,{useCallback,useEffect,useState} from "react";
 import {ActivityIndicator,KeyboardAvoidingView,Platform,Pressable,ScrollView,StyleSheet,Text,TextInput,View} from "react-native";
 import {MessageCircle,Send,RefreshCw,Users} from "lucide-react-native";
+import { theme } from "./theme";
 
-const C={bg:"#090910",panel:"#12121D",panel2:"#191927",line:"#29283A",text:"#F5F3FF",muted:"#9290A8",purple:"#8B5CF6",lav:"#B9A0FF",green:"#4BD49A"};
+const C=theme.colors;
 const channels=[{id:"general",name:"General",game:"All games",mark:"🌐"},{id:"minecraft",name:"Minecraft",game:"Minecraft",mark:"⛏"},{id:"fortnite",name:"Fortnite",game:"Fortnite",mark:"🚌"},{id:"gta-v",name:"GTA",game:"Grand Theft Auto",mark:"🚗"},{id:"roblox",name:"Roblox",game:"Roblox",mark:"🧱"},{id:"call-of-duty",name:"Call of Duty",game:"Call of Duty",mark:"🎯"},{id:"rocket-league",name:"Rocket League",game:"Rocket League",mark:"⚽"},{id:"apex-legends",name:"Apex Legends",game:"Apex Legends",mark:"🔥"},{id:"ea-fc",name:"EA FC",game:"EA SPORTS FC",mark:"🏆"},{id:"other-games",name:"Other games",game:"Everything else",mark:"🎮"}];
 const API=(process.env.EXPO_PUBLIC_API_URL||"").replace(/\/$/,"");
 type Message={id:string;channel_id:string;author_name:string;body:string;created_at:string};
