@@ -2,36 +2,49 @@
 
 **One account. Every game. Your entire gaming community.**
 
-Respawn is an all-in-one gaming social platform concept. Bring your gaming identity together, discover communities, find teammates and keep up with your friends.
+Respawn is a free-first gaming social platform concept built with Expo and React Native. It brings game discovery, player matching, communities, guilds, events, messaging and gaming identity into one place.
 
-## First milestone
+## Current prototype
+- Dark, mobile-first dashboard and navigation
+- Discover search and filters for games, players, communities, guilds, events and feed posts
+- Local game collection
+- Sample player/community discovery
+- Local join/leave, event RSVP and post-like interactions
+- Message list preview and local notes
+- Player profile and platform connection placeholders
 
-- Expo + React Native mobile app foundation
-- Dark gaming-focused interface
-- Home activity feed
-- Game and community discovery
-- Game library
-- Friends and messages interface
-- Player profile
-- Local interactive demo data
+**Important:** The app currently uses sample/local data. It is not yet a live social network. Real authentication, persistent profiles, messaging, voice, notifications and verified platform links require backend deployment and provider approval.
+
+## Tech
+- Expo SDK 54
+- React Native 0.81
+- TypeScript
+- Supabase-ready PostgreSQL schema with Row Level Security starter policies
 
 ## Run locally
-
 ```bash
 npm install
+npm run typecheck
 npx expo start
 ```
 
-Scan the QR code with Expo Go on Android, or run `npx expo start --android` with an Android development environment.
+## Backend setup
+1. Create a Supabase project.
+2. Review and apply [supabase/schema.sql](supabase/schema.sql) to a fresh project.
+3. Copy `.env.example` to `.env` and add the project URL and anon key.
+4. Implement and test server-side auth, OAuth callbacks, storage policies and moderation before exposing the app to real users.
 
-## Important
+The SQL is a starter, not a production security certification. Review every policy, add automated authorization tests, and keep OAuth tokens and service-role credentials server-side.
 
-This first milestone uses local demo data so the interface can be explored without paid APIs or service credentials. Real account linking, authentication, synchronised messaging, voice chat and live presence require secure backend services and platform-approved integrations. Never enter gaming account passwords into Respawn.
+## Documentation
+- [Feature map and milestones](docs/FEATURES.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Platform integration constraints](docs/INTEGRATIONS.md)
+- [Safety and moderation](docs/SAFETY.md)
+- [Roadmap](ROADMAP.md)
 
-## Planned integrations
-
-Xbox, PlayStation Network, Steam, Epic Games, Nintendo, Riot Games, Ubisoft Connect, EA, Battle.net and Minecraft, subject to each platform's official API and authentication capabilities.
-
-## Project status
-
-Early development. Features shown with demo data are not yet connected to live multiplayer services.
+## Product principles
+- Free to use, no subscriptions or pay-to-win mechanics.
+- No paid AI dependency.
+- Official provider authorization only. Never collect platform passwords.
+- Privacy, blocking and reporting are core requirements.
