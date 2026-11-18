@@ -1,25 +1,14 @@
-import "react-native-url-polyfill/auto";
 import * as SecureStore from "expo-secure-store";
-import { createClient } from "@supabase/supabase-js";
-
-const secureStorage = {
-  getItem: (key: string) => SecureStore.getItemAsync(key),
-  setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
-  removeItem: (key: string) => SecureStore.deleteItemAsync(key)
-};
-
-const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-
-export const backendConfigured = Boolean(url && anonKey);
-export const supabase = backendConfigured
-  ? createClient(url!, anonKey!, {
-      auth: {
-        storage: secureStorage,
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: false
-      },
-      realtime: { params: { eventsPerSecond: 5 } }
-    })
-  : null;
+export const apiUrl=(process.env.EXPO_PUBLIC_RESPAWN_API_URL||"").replace(/\/$/,"");
+export const backendConfigured=Boolean(apiUrl);
+const KEY="respawn_access_token";
+export const getAccessToken=()=>SecureStore.getItemAsync(KEY);
+export const setAccessToken=(v:string|null)=>v?SecureStore.setItemAsync(KEY,v):SecureStore.deleteItemAsync(KEY);
+export async function apiRequest<T=any>(path:string,options:RequestInit={}):Promise<T>{
+ if(!apiUrl) throw new Error("Respawn API is not configured. See docs/SETUP_BACKEND.md.");
+ const token=await getAccessToken();
+ const r=await fetch(apiUrl+path,{...options,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{}),...(options.headers||{})}});
+ const data=await r.json().catch(()=>({}));
+ if(!r.ok) throw new Error(data.error||"Respawn API request failed ("+r.status+").");
+ return data as T;
+}
