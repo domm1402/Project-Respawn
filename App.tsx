@@ -303,4 +303,5 @@ const s = StyleSheet.create({
 });
 
 
-export default function App() {\n  return <AuthGate><RespawnApp /></AuthGate>;\n}\n
+export default function App() {
+  return <AuthGate><RespawnApp /></AuthGate>;\n}\n
