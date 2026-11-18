@@ -20,8 +20,8 @@ function Controls({ onLeave }: { onLeave: () => void }) {
   </View>;
 }
 
-export default function VoiceRoomScreen({ onBack }: { onBack: () => void }) {
-  const [roomId, setRoomId] = useState("");
+export default function VoiceRoomScreen({ onBack, initialRoomId = "" }: { onBack: () => void; initialRoomId?: string }) {
+  const [roomId, setRoomId] = useState(initialRoomId);
   const [token, setToken] = useState("");
   const [serverUrl, setServerUrl] = useState("");
   const [busy, setBusy] = useState(false);
