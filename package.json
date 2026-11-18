@@ -20,10 +20,16 @@
     "react-native-svg": "15.12.1",
     "@supabase/supabase-js": "^2.57.4",
     "expo-secure-store": "~15.0.7",
-    "react-native-url-polyfill": "^2.0.0"
+    "react-native-url-polyfill": "^2.0.0",
+    "@livekit/react-native": "^3.1.1",
+    "@livekit/react-native-expo-plugin": "^1.2.0",
+    "@livekit/react-native-webrtc": "^150.1.1",
+    "@config-plugins/react-native-webrtc": "^13.0.0",
+    "livekit-client": "^2.15.6"
   },
   "devDependencies": {
     "@types/react": "~19.1.10",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "expo-dev-client": "~6.0.20"
   }
 }
