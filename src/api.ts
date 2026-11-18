@@ -246,3 +246,13 @@ export async function listCommunities() {
   if (error) throw error;
   return data;
 }
+
+
+export async function createVoiceRoom(input: { name: string; community_id?: string; guild_id?: string }) {
+  const client = db();
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) throw new Error("Sign in first.");
+  const { data, error } = await client.from("voice_rooms").insert({ ...input, created_by: user.id }).select().single();
+  if (error) throw error;
+  return data;
+}
