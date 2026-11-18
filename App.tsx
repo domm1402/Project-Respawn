@@ -1,414 +1,53 @@
 import React, { useEffect, useMemo, useState } from "react";
-import AuthGate, { useAuth } from "./src/AuthGate";
-import { connectSteam, connectXbox, connectMinecraft, getMyProfile } from "./src/api";
-import { getStoredPlatformAccounts, removePlatformAccount } from "./src/platformAccounts";
-import { backendConfigured } from "./src/backend";
-import LiveMessagingScreen from "./src/LiveMessagingScreen";
-import LiveDiscoverScreen from "./src/LiveDiscoverScreen";
-import { registerGlobals } from "@livekit/react-native";
-import {
-  SafeAreaView, View, Text, StyleSheet, ScrollView, Pressable, AppState,
-  TextInput, StatusBar, Image, Platform, Linking, Alert
-} from "react-native";
-import {
-  Home, Compass, Gamepad2, MessageCircle, UserRound, Search,
-  Bell, Plus, ChevronRight, Users, Trophy, Zap, Flame, Radio,
-  Shield, Clock3, Star, SlidersHorizontal, Play, Send, Settings,
-  Link2, CircleDot, Hash, Headphones, Gamepad, Bookmark, Sparkles
-} from "lucide-react-native";
+import { SafeAreaView, View, Text, StyleSheet, ScrollView, Pressable, TextInput, StatusBar, Alert } from "react-native";
+import * as SecureStore from "expo-secure-store";
+import { Home, Library, Monitor, Trophy, UserRound, Search, Plus, ChevronRight, Clock3, Flame, Star, Gamepad2, Cpu, HardDrive, Save, Check, Zap, CalendarDays, ChartNoAxesColumnIncreasing } from "lucide-react-native";
 
-registerGlobals();
-
-type Tab = "Home" | "Discover" | "Games" | "Messages" | "Profile";
-
-const C = {
-  bg: "#090910", panel: "#12121D", panel2: "#191927", line: "#28283A",
-  text: "#F5F4FF", muted: "#9291A8", purple: "#8B5CF6", purple2: "#A78BFA",
-  green: "#45D483", orange: "#FF9D57", blue: "#62A9FF", pink: "#F17BC8"
-};
-
-const games = [
-  { name: "Fortnite", genre: "Battle Royale", players: "2.4k online", color: "#7954D8", mark: "F" },
-  { name: "Minecraft", genre: "Sandbox", players: "1.8k online", color: "#438B58", mark: "M" },
-  { name: "Call of Duty", genre: "FPS", players: "986 online", color: "#9B8A58", mark: "C" },
-  { name: "Rocket League", genre: "Sports", players: "742 online", color: "#397AB8", mark: "R" },
-  { name: "Grand Theft Auto V", genre: "Open world", players: "1.1k online", color: "#4A9B78", mark: "V" },
-  { name: "Apex Legends", genre: "Battle Royale", players: "634 online", color: "#B95B50", mark: "A" }
-];
-
-const communities = [
-  { name: "Fortnite LFG", tag: "FIND A SQUAD", members: "18.2k", game: "Fortnite", color: "#7954D8" },
-  { name: "Minecraft Builders", tag: "BUILD TOGETHER", members: "9.6k", game: "Minecraft", color: "#438B58" },
-  { name: "The Ranked Hub", tag: "COMPETITIVE", members: "6.1k", game: "Multi-game", color: "#397AB8" }
-];
-
-const guilds = [
-  { name: "Respawn Raiders", tag: "CASUAL · ALL PLATFORMS", members: "2.4k", game: "Multi-game", color: "#8B5CF6" },
-  { name: "The Endgame", tag: "COMPETITIVE · EU", members: "860", game: "FPS games", color: "#397AB8" },
-  { name: "Block Party", tag: "CREATIVE · FRIENDLY", members: "1.2k", game: "Minecraft", color: "#438B58" }
-];
-
-const events = [
-  { name: "Friday Night Squad-Up", date: "FRI · 19:00", game: "Fortnite", host: "Respawn Raiders", spots: "8 places" },
-  { name: "Community Build Night", date: "SAT · 16:00", game: "Minecraft", host: "Block Party", spots: "Open invite" },
-  { name: "Ranked Climb Session", date: "SUN · 18:30", game: "Rocket League", host: "The Endgame", spots: "4 places" }
-];
-
-const feedPosts = [
-  { id: "p1", author: "Nova", handle: "@nova.exe", text: "Finally hit the next rank. Who's up for a few games tonight?", game: "Fortnite", likes: 24, color: "#A78BFA" },
-  { id: "p2", author: "Kai", handle: "@kaiplays", text: "Started a new survival world. Looking for builders to join the project.", game: "Minecraft", likes: 18, color: "#55B98A" },
-  { id: "p3", author: "Milo", handle: "@miloFPS", text: "What game has the best soundtrack? Drop your picks below.", game: "Gaming discussion", likes: 31, color: "#E69A61" }
-];
-
-const people = [
-  { name: "Nova", handle: "@nova.exe", games: "Fortnite · Rocket League", status: "Looking for players", color: "#A78BFA" },
-  { name: "Kai", handle: "@kaiplays", games: "Minecraft · GTA V", status: "Online", color: "#55B98A" },
-  { name: "Milo", handle: "@miloFPS", games: "Call of Duty · Apex", status: "In a match", color: "#E69A61" }
-];
-
-function Avatar({ label, color = C.purple, size = 42 }: { label: string; color?: string; size?: number }) {
-  return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color + "30", borderColor: color + "80", borderWidth: 1, alignItems: "center", justifyContent: "center" }}>
-    <Text style={{ color, fontWeight: "900", fontSize: size * 0.34 }}>{label.slice(0, 1).toUpperCase()}</Text>
-  </View>;
+const C={bg:"#090910",panel:"#12121D",panel2:"#191927",line:"#29283A",text:"#F5F3FF",muted:"#9290A8",purple:"#8B5CF6",lav:"#B9A0FF",green:"#4BD49A",orange:"#FFB36B"};
+const KEY="respawn_companion_data_v1";
+const catalog=[{name:"Minecraft",genre:"Sandbox",color:"#438B58",mark:"M"},{name:"Fortnite",genre:"Battle Royale",color:"#7954D8",mark:"F"},{name:"Rocket League",genre:"Sports",color:"#397AB8",mark:"R"},{name:"Grand Theft Auto V",genre:"Open world",color:"#4A9B78",mark:"V"},{name:"Apex Legends",genre:"Battle Royale",color:"#B95B50",mark:"A"},{name:"EA SPORTS FC 26",genre:"Sports",color:"#397B69",mark:"FC"},{name:"Call of Duty",genre:"FPS",color:"#9B8A58",mark:"C"},{name:"Red Dead Redemption 2",genre:"Adventure",color:"#A45F3E",mark:"R"}];
+const missions=[{id:"daily1",title:"Play a game for 30 minutes",xp:100,kind:"DAILY"},{id:"daily2",title:"Add a game to your vault",xp:50,kind:"DAILY"},{id:"weekly1",title:"Complete three gaming sessions",xp:250,kind:"WEEKLY"},{id:"weekly2",title:"Save your dream gaming setup",xp:150,kind:"WEEKLY"}];
+const gpus=["RTX 5090","RTX 5080","RTX 5070 Ti","RTX 5070","RX 9070 XT","RX 9060 XT"];
+const cpus=["Ryzen 9 9950X3D","Ryzen 7 9800X3D","Ryzen 7 7800X3D","Intel Core Ultra 9 285K","Intel Core Ultra 7 265K"];
+const gamesPrice=[["Minecraft","£24.99"],["Fortnite","Free"],["Rocket League","Free"],["Grand Theft Auto V","£24.99"],["Apex Legends","Free"],["EA SPORTS FC 26","£69.99"],["Call of Duty","£69.99"],["Red Dead Redemption 2","£49.99"]];
+type SavedSetup={name:string;gpu:string;cpu:string;ram:string;storage:string;price:number};
+type Data={library:string[];wishlist:string[];completed:string[];setups:SavedSetup[];xp:number;streak:number};
+const initial:Data={library:["Minecraft","Fortnite"],wishlist:["Grand Theft Auto V"],completed:[],setups:[],xp:0,streak:1};
+type Tab="Home"|"Vault"|"Setups"|"Level Up"|"Profile";
+function Btn({label,onPress,secondary=false}:any){return <Pressable onPress={onPress} style={[s.btn,secondary&&s.btnSecondary]}><Text style={[s.btnText,secondary&&s.btnSecondaryText]}>{label}</Text></Pressable>}
+function Heading({eyebrow,title,right}:any){return <View style={s.headingRow}><View><Text style={s.eyebrow}>{eyebrow}</Text><Text style={s.heading}>{title}</Text></View>{right}</View>}
+function Card({children,style}:any){return <View style={[s.card,style]}>{children}</View>}
+function GameCard({name,onPress,action,actionLabel}:any){const game=catalog.find(x=>x.name===name)||{name,genre:"Game",color:C.purple,mark:name[0]};return <View style={s.gameRow}><View style={[s.gameArt,{backgroundColor:game.color}]}><Text style={s.gameMark}>{game.mark}</Text></View><View style={{flex:1}}><Text style={s.cardTitle}>{game.name}</Text><Text style={s.muted}>{game.genre}</Text></View>{action?<Pressable onPress={onPress} style={s.smallAction}><Text style={s.smallActionText}>{actionLabel}</Text></Pressable>:<ChevronRight color={C.muted} size={17}/>}</View>}
+export default function App(){
+ const [tab,setTab]=useState<Tab>("Home"),[data,setData]=useState<Data>(initial),[ready,setReady]=useState(false),[query,setQuery]=useState(""),[filter,setFilter]=useState("All"),[gpu,setGpu]=useState(gpus[2]),[cpu,setCpu]=useState(cpus[1]),[ram,setRam]=useState("32 GB DDR5"),[storage,setStorage]=useState("2 TB NVMe"),[setupName,setSetupName]=useState("My dream PC");
+ useEffect(()=>{(async()=>{try{const raw=await SecureStore.getItemAsync(KEY);if(raw)setData({...initial,...JSON.parse(raw)})}catch{}finally{setReady(true)}})()},[]);
+ useEffect(()=>{if(ready)SecureStore.setItemAsync(KEY,JSON.stringify(data)).catch(()=>{})},[data,ready]);
+ const level=Math.floor(data.xp/500)+1,progress=data.xp%500;
+ const library=catalog.filter(g=>data.library.includes(g.name));
+ const found=catalog.filter(g=>g.name.toLowerCase().includes(query.toLowerCase())&&(filter==="All"|| (filter==="Owned"?data.library.includes(g.name):data.wishlist.includes(g.name))));
+ const price=(gpu.includes("5090")?2200:gpu.includes("5080")?1500:gpu.includes("5070 Ti")?950:gpu.includes("5070")?750:gpu.includes("9070")?800:500)+(cpu.includes("9950")?650:cpu.includes("9800")?480:cpu.includes("7800")?330:cpu.includes("285K")?550:400)+(ram.startsWith("64")?220:120)+(storage.startsWith("4")?250:140)+180;
+ function toggleGame(name:string){setData(d=>({...d,library:d.library.includes(name)?d.library.filter(x=>x!==name):[...d.library,name]}))}
+ function cycle(value:string,options:string[],setter:(v:string)=>void){setter(options[(options.indexOf(value)+1)%options.length])}
+ function completeMission(id:string){if(data.completed.includes(id))return;const mission=missions.find(m=>m.id===id);if(mission)setData(d=>({...d,completed:[...d.completed,id],xp:d.xp+mission.xp}))}
+ function saveSetup(){const item={name:setupName.trim()||"My gaming PC",gpu,cpu,ram,storage,price};setData(d=>({...d,setups:[...d.setups,item],xp:d.xp+150}));Alert.alert("Setup saved","Your build is saved on this device. +150 XP")}
+ const tabs:[Tab,any,any][]=[["Home",Home,"Home"],["Vault",Library,"Vault"],["Setups",Monitor,"Setups"],["Level Up",Trophy,"Level Up"],["Profile",UserRound,"Profile"]];
+ return <SafeAreaView style={s.safe}><StatusBar barStyle="light-content" backgroundColor={C.bg}/><View style={s.topbar}><View style={s.brandMark}><Gamepad2 color={C.lav} size={22}/></View><View style={{flex:1}}><Text style={s.brand}>RESPAWN</Text><Text style={s.tagline}>YOUR GAMING WORLD</Text></View><View style={s.levelPill}><Zap color={C.lav} size={13}/><Text style={s.levelPillText}>LVL {level}</Text></View></View>
+ {tab==="Home"&&<ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+ <Heading eyebrow="YOUR GAMING HQ" title="Welcome back, player."/>
+ <View style={s.hero}><Text style={s.heroEyebrow}>PLAYER LEVEL {level}</Text><Text style={s.heroTitle}>Your next level starts here.</Text><Text style={s.heroSub}>Keep your games organised, tune your setup and stack XP.</Text><View style={s.progressTrack}><View style={[s.progressFill,{width:(progress/500*100)+"%"}]}/></View><Text style={s.progressText}>{progress} / 500 XP TO LEVEL {level+1}</Text></View>
+ <View style={s.stats}><Card style={s.statCard}><Text style={s.statNum}>{data.library.length}</Text><Text style={s.statLabel}>GAMES IN VAULT</Text></Card><Card style={s.statCard}><Text style={s.statNum}>{data.setups.length}</Text><Text style={s.statLabel}>SAVED BUILDS</Text></Card><Card style={s.statCard}><Text style={s.statNum}>{data.xp}</Text><Text style={s.statLabel}>TOTAL XP</Text></Card></View>
+ <View style={s.sectionHead}><Text style={s.sectionTitle}>Recently in your vault</Text><Pressable onPress={()=>setTab("Vault")}><Text style={s.link}>View all ›</Text></Pressable></View>
+ {library.slice(0,3).map(g=><GameCard key={g.name} name={g.name}/>)}
+ <View style={s.sectionHead}><Text style={s.sectionTitle}>Daily missions</Text><Pressable onPress={()=>setTab("Level Up")}><Text style={s.link}>All missions ›</Text></Pressable></View>
+ {missions.slice(0,2).map(m=><Card key={m.id} style={s.missionRow}><View style={s.missionIcon}><Star color={C.lav} size={17}/></View><View style={{flex:1}}><Text style={s.cardTitle}>{m.title}</Text><Text style={s.muted}>+{m.xp} XP</Text></View><Text style={s.missionStatus}>{data.completed.includes(m.id)?"DONE":"+"+m.xp}</Text></Card>)}
+ <Card style={s.featureCard}><Monitor color={C.lav} size={23}/><Text style={s.sectionTitle}>Build your dream setup</Text><Text style={s.muted}>Pick your parts, estimate the cost and save your build.</Text><Btn label="Open setup builder" onPress={()=>setTab("Setups")}/></Card>
+ </ScrollView>}
+ {tab==="Vault"&&<ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled"><Heading eyebrow="YOUR COLLECTION" title="Game Vault" right={<View style={s.countPill}><Text style={s.countText}>{data.library.length} GAMES</Text></View>}/><View style={s.search}><Search color={C.muted} size={18}/><TextInput value={query} onChangeText={setQuery} placeholder="Search games..." placeholderTextColor={C.muted} style={s.searchInput}/></View><View style={s.chips}>{["All","Owned","Wishlist"].map(x=><Pressable key={x} onPress={()=>setFilter(x)} style={[s.chip,filter===x&&s.chipActive]}><Text style={[s.chipText,filter===x&&s.chipTextActive]}>{x}</Text></Pressable>)}</View><Text style={s.sectionTitle}>{filter==="Owned"?"Your games":filter==="Wishlist"?"Your wishlist":"Discover games to add"}</Text>{found.map(g=><GameCard key={g.name} name={g.name} action onPress={()=>filter==="Wishlist"?setData(d=>({...d,wishlist:d.wishlist.filter(x=>x!==g.name)})):toggleGame(g.name)} actionLabel={filter==="Owned"?"Remove":filter==="Wishlist"?"Remove":"Add"}/>)}
+ <Text style={s.sectionTitle}>Wishlist ideas</Text>{catalog.filter(g=>!data.library.includes(g.name)&&!data.wishlist.includes(g.name)).slice(0,4).map(g=><GameCard key={g.name} name={g.name} action onPress={()=>setData(d=>({...d,wishlist:[...d.wishlist,g.name]}))} actionLabel="Wish"/>)}<Text style={s.footnote}>Your library and wishlist are stored locally on this device.</Text></ScrollView>}
+ {tab==="Setups"&&<ScrollView contentContainerStyle={s.content}><Heading eyebrow="DESIGN YOUR BATTlESTATION" title="Setup Builder"/><Card style={s.builderHero}><Cpu color={C.lav} size={25}/><Text style={s.builderTitle}>Build your dream PC</Text><Text style={s.muted}>Choose your components. Tap any part to cycle through options.</Text></Card><Text style={s.sectionTitle}>Core components</Text>{[[ "Graphics card",gpu,gpus,setGpu],[ "Processor",cpu,cpus,setCpu],[ "Memory",ram,["16 GB DDR5","32 GB DDR5","64 GB DDR5"],setRam],[ "Storage",storage,["1 TB NVMe","2 TB NVMe","4 TB NVMe"],setStorage]].map((item:any[])=>{const Icon=item[0]==="Graphics card"?Monitor:item[0]==="Processor"?Cpu:HardDrive;return <Pressable key={item[0]} onPress={()=>cycle(item[1],item[2],item[3])} style={s.partRow}><View style={s.partIcon}><Icon color={C.lav} size={18}/></View><View style={{flex:1}}><Text style={s.muted}>{item[0]}</Text><Text style={s.cardTitle}>{item[1]}</Text></View><Text style={s.change}>CHANGE ›</Text></Pressable>})}<Card style={s.priceCard}><Text style={s.muted}>ESTIMATED BUILD TOTAL</Text><Text style={s.price}>£{price.toLocaleString("en-GB")}</Text><Text style={s.footnote}>Illustrative estimate, not a live retailer quote. Case, cooling and power supply allowance included.</Text><TextInput value={setupName} onChangeText={setSetupName} placeholder="Name this setup" placeholderTextColor={C.muted} style={s.nameInput}/><Btn label="Save setup  ·  +150 XP" onPress={saveSetup}/></Card><Text style={s.sectionTitle}>Saved setups</Text>{data.setups.length===0?<Text style={s.muted}>Your saved builds will appear here.</Text>:data.setups.map((x,i)=><Card key={i} style={s.savedSetup}><View style={{flex:1}}><Text style={s.cardTitle}>{x.name}</Text><Text style={s.muted}>{x.gpu} · {x.cpu}</Text><Text style={s.muted}>£{x.price.toLocaleString("en-GB")}</Text></View><Pressable onPress={()=>setData(d=>({...d,setups:d.setups.filter((_,n)=>n!==i)}))}><Text style={s.remove}>REMOVE</Text></Pressable></Card>)}</ScrollView>}
+ {tab==="Level Up"&&<ScrollView contentContainerStyle={s.content}><Heading eyebrow="YOUR PLAYER JOURNEY" title="Level Up"/><View style={s.hero}><Text style={s.heroEyebrow}>CURRENT RANK</Text><Text style={s.levelBig}>LEVEL {level}</Text><Text style={s.heroSub}>{data.xp} total XP · {500-progress} XP to next level</Text><View style={s.progressTrack}><View style={[s.progressFill,{width:(progress/500*100)+"%"}]}/></View></View><View style={s.stats}><Card style={s.statCard}><Flame color={C.orange} size={20}/><Text style={s.statNum}>{data.streak}</Text><Text style={s.statLabel}>DAY STREAK</Text></Card><Card style={s.statCard}><Trophy color={C.lav} size={20}/><Text style={s.statNum}>{data.completed.length}</Text><Text style={s.statLabel}>MISSIONS DONE</Text></Card><Card style={s.statCard}><Zap color={C.lav} size={20}/><Text style={s.statNum}>{data.xp}</Text><Text style={s.statLabel}>TOTAL XP</Text></Card></View><Text style={s.sectionTitle}>Missions</Text>{missions.map(m=>{const done=data.completed.includes(m.id);return <Card key={m.id} style={s.missionCard}><View style={{flex:1}}><Text style={s.missionType}>{m.kind} MISSION</Text><Text style={s.cardTitle}>{m.title}</Text><Text style={s.muted}>Reward: +{m.xp} XP</Text></View><Pressable disabled={done} onPress={()=>completeMission(m.id)} style={[s.completeButton,done&&s.doneButton]}>{done?<Check color={C.green} size={18}/>:<Text style={s.completeText}>CLAIM</Text>}</Pressable></Card>})}<Text style={s.footnote}>Missions are currently tracked on this device. Game activity is not automatically imported from platforms yet.</Text></ScrollView>}
+ {tab==="Profile"&&<ScrollView contentContainerStyle={s.content}><Heading eyebrow="YOUR PLAYER CARD" title="Profile"/><Card style={s.profileCard}><View style={s.avatar}><Gamepad2 color={C.lav} size={31}/></View><Text style={s.profileName}>Respawn Player</Text><Text style={s.muted}>LEVEL {level} · GAMING ENTHUSIAST</Text><View style={s.profileStats}><View><Text style={s.statNum}>{data.library.length}</Text><Text style={s.statLabel}>GAMES</Text></View><View><Text style={s.statNum}>{data.xp}</Text><Text style={s.statLabel}>XP</Text></View><View><Text style={s.statNum}>{data.setups.length}</Text><Text style={s.statLabel}>BUILDS</Text></View></View></Card><Text style={s.sectionTitle}>Your gaming snapshot</Text><Card style={s.infoRow}><Gamepad2 color={C.lav}/><Text style={s.cardTitle}>Game collection</Text><Text style={s.infoValue}>{data.library.length} saved</Text></Card><Card style={s.infoRow}><Monitor color={C.lav}/><Text style={s.cardTitle}>PC setups</Text><Text style={s.infoValue}>{data.setups.length} saved</Text></Card><Card style={s.infoRow}><Trophy color={C.lav}/><Text style={s.cardTitle}>Missions completed</Text><Text style={s.infoValue}>{data.completed.length}</Text></Card><Btn label="Reset local app data" secondary onPress={()=>Alert.alert("Reset Respawn?","This clears your vault, XP and saved setups on this device.",[{text:"Cancel",style:"cancel"},{text:"Reset",style:"destructive",onPress:()=>setData(initial)}])}/><Text style={s.footnote}>Respawn is currently a local-first companion. Your data stays on this device.</Text></ScrollView>}
+ <View style={s.nav}>{tabs.map(([name,Icon,label])=><Pressable key={name} onPress={()=>setTab(name)} style={s.navItem}><Icon color={tab===name?C.lav:C.muted} size={20}/><Text style={[s.navLabel,tab===name&&s.navLabelActive]}>{label}</Text>{tab===name&&<View style={s.navDot}/>}</Pressable>)}</View>
+ </SafeAreaView>
 }
-
-function SectionTitle({ title, action, onPress }: { title: string; action?: string; onPress?: () => void }) {
-  return <View style={s.sectionHead}><Text style={s.sectionTitle}>{title}</Text>{action ? <Pressable onPress={onPress}><Text style={s.link}>{action}  ›</Text></Pressable> : null}</View>;
-}
-
-function GameTile({ game, compact = false, onPress }: { game: typeof games[number]; compact?: boolean; onPress?: () => void }) {
-  return <Pressable onPress={onPress} style={[s.gameTile, compact && s.gameTileCompact]}>
-    <View style={[s.gameArt, { backgroundColor: game.color }]}>
-      <Text style={s.gameMark}>{game.mark}</Text>
-      <View style={s.artGlow} />
-    </View>
-    <View style={{ flex: 1 }}>
-      <Text style={s.gameName} numberOfLines={1}>{game.name}</Text>
-      <Text style={s.smallMuted}>{compact ? game.genre : game.players}</Text>
-    </View>
-    <ChevronRight color={C.muted} size={17} />
-  </Pressable>;
-}
-
-function HomeScreen({ setTab }: { setTab: (tab: Tab) => void }) {
-  return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-    <View style={s.greetingRow}>
-      <View><Text style={s.eyebrow}>YOUR GAMING HOME</Text><Text style={s.heading}>Your lobby, <Text style={{ color: C.purple2 }}>your rules.</Text></Text></View>
-      <Pressable style={s.iconButton}><Bell color={C.text} size={20} /><View style={s.notificationDot} /></Pressable>
-    </View>
-    <View style={s.hero}>
-      <View style={s.heroOrb} />
-      <Text style={s.heroEyebrow}>WELCOME TO RESPAWN</Text>
-      <Text style={s.heroTitle}>Your whole{ "\n" }gaming world.</Text>
-      <Text style={s.heroText}>Find your people. Build your squad. Play more together.</Text>
-      <Pressable onPress={() => setTab("Discover")} style={s.primaryButton}><Text style={s.primaryButtonText}>Explore Respawn</Text><ChevronRight color="#fff" size={17} /></Pressable>
-      <View style={s.heroStamp}><Gamepad2 color="#D6C8FF" size={32} /></View>
-    </View>
-    <View style={s.statRow}>
-      <View style={s.statCard}><Text style={s.statValue}>12</Text><Text style={s.statLabel}>GAMES TO EXPLORE</Text></View>
-      <View style={s.statCard}><Text style={s.statValue}>3</Text><Text style={s.statLabel}>COMMUNITIES LIVE</Text></View>
-      <View style={s.statCard}><Text style={s.statValue}>24/7</Text><Text style={s.statLabel}>GAMING ENERGY</Text></View>
-    </View>
-    <SectionTitle title="Your gaming circle" action="Find players" onPress={() => setTab("Discover")} />
-    <View style={s.panel}>
-      {people.slice(0, 2).map((p, i) => <View key={p.handle} style={[s.personRow, i > 0 && s.topBorder]}>
-        <Avatar label={p.name} color={p.color} />
-        <View style={{ flex: 1 }}><Text style={s.personName}>{p.name}</Text><Text style={s.smallMuted}>{p.games}</Text></View>
-        <View style={s.onlinePill}><View style={s.greenDot} /><Text style={s.onlineText}>{p.status === "Online" ? "ONLINE" : "LFG"}</Text></View>
-      </View>)}
-    </View>
-    <SectionTitle title="Communities to check out" action="See all" onPress={() => setTab("Discover")} />
-    {communities.slice(0, 2).map(c => <View key={c.name} style={s.communityCard}>
-      <View style={[s.communityIcon, { backgroundColor: c.color + "25" }]}><Users color={c.color} size={22} /></View>
-      <View style={{ flex: 1 }}><Text style={s.cardTitle}>{c.name}</Text><Text style={s.smallMuted}>{c.members} members · {c.game}</Text></View>
-      <Pressable style={s.joinSmall}><Text style={s.joinSmallText}>View</Text></Pressable>
-    </View>)}
-    <SectionTitle title="Games people are playing" action="My games" onPress={() => setTab("Games")} />
-    {games.slice(0, 3).map(g => <GameTile key={g.name} game={g} compact />)}
-    <View style={{ height: 20 }} />
-  </ScrollView>;
-}
-
-function DiscoverScreen() {
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("All");
-  const [joined, setJoined] = useState<string[]>([]);
-  const [joinedGuilds, setJoinedGuilds] = useState<string[]>([]);
-  const [rsvps, setRsvps] = useState<string[]>([]);
-  const [likedPosts, setLikedPosts] = useState<string[]>([]);
-  const filteredGames = games.filter(g => g.name.toLowerCase().includes(query.toLowerCase()));
-  const filters = ["All", "Games", "Players", "Communities", "Guilds", "Events", "Feed"];
-  return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-    <Text style={s.eyebrow}>FIND YOUR NEXT PARTY</Text><Text style={s.heading}>Discover</Text>
-    <View style={s.searchBox}><Search color={C.muted} size={19} /><TextInput value={query} onChangeText={setQuery} placeholder="Search games, players, communities..." placeholderTextColor={C.muted} style={s.searchInput} /></View>
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.filterRow}>{filters.map(f => <Pressable key={f} onPress={() => setFilter(f)} style={[s.filterChip, filter === f && s.filterChipActive]}><Text style={[s.filterText, filter === f && s.filterTextActive]}>{f}</Text></Pressable>)}</ScrollView>
-    {(filter === "All" || filter === "Games") && <><SectionTitle title="Popular games" action="View library" /><View style={s.grid}>{filteredGames.slice(0, 4).map(g => <Pressable key={g.name} onPress={() => setQuery(g.name)} style={s.discoverGame}><View style={[s.discoverArt, { backgroundColor: g.color }]}><Text style={s.discoverMark}>{g.mark}</Text></View><Text style={s.cardTitle} numberOfLines={1}>{g.name}</Text><Text style={s.smallMuted}>{g.genre}</Text></Pressable>)}</View></>}
-    {(filter === "All" || filter === "Communities") && <><SectionTitle title="Communities" action="Browse all" />{communities.filter(c => (c.name + c.game).toLowerCase().includes(query.toLowerCase())).map(c => <View key={c.name} style={s.communityCard}><View style={[s.communityIcon, { backgroundColor: c.color + "25" }]}><Shield color={c.color} size={22} /></View><View style={{ flex: 1 }}><Text style={s.cardTitle}>{c.name}</Text><Text style={s.smallMuted}>{c.tag} · {c.members} members</Text></View><Pressable onPress={() => setJoined(old => old.includes(c.name) ? old.filter(x => x !== c.name) : [...old, c.name])} style={[s.joinSmall, joined.includes(c.name) && s.joinedButton]}><Text style={s.joinSmallText}>{joined.includes(c.name) ? "Joined" : "Join"}</Text></Pressable></View>)}</>}
-    {(filter === "All" || filter === "Players") && <><SectionTitle title="Players looking for teammates" />{people.filter(p => (p.name + p.games).toLowerCase().includes(query.toLowerCase())).map(p => <View key={p.handle} style={s.personCard}><Avatar label={p.name} color={p.color} size={46} /><View style={{ flex: 1 }}><Text style={s.personName}>{p.name} <Text style={s.handle}>{p.handle}</Text></Text><Text style={s.smallMuted}>{p.games}</Text><Text style={s.lfgText}>{p.status}</Text></View><Pressable style={s.iconButtonSmall}><Plus color={C.text} size={18} /></Pressable></View>)}</>}
-    {(filter === "All" || filter === "Guilds") && <><SectionTitle title="Guilds recruiting" action="Explore guilds" />{guilds.filter(g => (g.name + g.game + g.tag).toLowerCase().includes(query.toLowerCase())).map(g => <View key={g.name} style={s.communityCard}><View style={[s.communityIcon, { backgroundColor: g.color + "25" }]}><Shield color={g.color} size={22} /></View><View style={{ flex: 1 }}><Text style={s.cardTitle}>{g.name}</Text><Text style={s.smallMuted}>{g.tag} · {g.members} members</Text><Text style={s.smallMuted}>{g.game}</Text></View><Pressable onPress={() => setJoinedGuilds(old => old.includes(g.name) ? old.filter(x => x !== g.name) : [...old, g.name])} style={[s.joinSmall, joinedGuilds.includes(g.name) && s.joinedButton]}><Text style={s.joinSmallText}>{joinedGuilds.includes(g.name) ? "Joined" : "Join"}</Text></Pressable></View>)}</>}
-    {(filter === "All" || filter === "Events") && <><SectionTitle title="Upcoming gaming events" />{events.filter(e => (e.name + e.game + e.host).toLowerCase().includes(query.toLowerCase())).map(e => <View key={e.name} style={s.communityCard}><View style={[s.communityIcon, { backgroundColor: "#8B5CF625" }]}><Clock3 color={C.purple2} size={22} /></View><View style={{ flex: 1 }}><Text style={s.cardTitle}>{e.name}</Text><Text style={s.smallMuted}>{e.date} · {e.game}</Text><Text style={s.smallMuted}>Hosted by {e.host} · {e.spots}</Text></View><Pressable onPress={() => setRsvps(old => old.includes(e.name) ? old.filter(x => x !== e.name) : [...old, e.name])} style={[s.joinSmall, rsvps.includes(e.name) && s.joinedButton]}><Text style={s.joinSmallText}>{rsvps.includes(e.name) ? "Going" : "Join"}</Text></Pressable></View>)}</>}
-    {(filter === "All" || filter === "Feed") && <><SectionTitle title="Community feed" />{feedPosts.filter(p => (p.author + p.text + p.game).toLowerCase().includes(query.toLowerCase())).map(p => <View key={p.id} style={{ backgroundColor: C.panel, borderColor: C.line, borderWidth: 1, borderRadius: 15, padding: 13, gap: 9 }}><View style={{ flexDirection: "row", alignItems: "center", gap: 9 }}><Avatar label={p.author} color={p.color} size={36} /><View style={{ flex: 1 }}><Text style={s.personName}>{p.author} <Text style={s.handle}>{p.handle}</Text></Text><Text style={s.smallMuted}>{p.game}</Text></View><Text style={s.smallMuted}>POST</Text></View><Text style={{ color: C.text, fontSize: 12, lineHeight: 18 }}>{p.text}</Text><View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}><Text style={s.smallMuted}>{p.likes + (likedPosts.includes(p.id) ? 1 : 0)} likes</Text><Pressable onPress={() => setLikedPosts(old => old.includes(p.id) ? old.filter(x => x !== p.id) : [...old, p.id])} style={s.filterChip}><Text style={[s.filterText, likedPosts.includes(p.id) && s.filterTextActive]}>{likedPosts.includes(p.id) ? "♥ Liked" : "♡ Like"}</Text></Pressable></View></View>)}</>}
-    <View style={s.infoNote}><Sparkles color={C.purple2} size={17} /><Text style={s.infoText}>Discover is running on sample content while the community backend is being built.</Text></View>
-  </ScrollView>;
-}
-
-function GamesScreen() {
-  const [saved, setSaved] = useState<string[]>(["Fortnite", "Minecraft"]);
-  const [query, setQuery] = useState("");
-  const [connections, setConnections] = useState<Record<string, any>>({});
-  const [connecting, setConnecting] = useState<string | null>(null);
-  const shown = games.filter(g => g.name.toLowerCase().includes(query.toLowerCase()));
-
-  async function refreshConnections() {
-    try {
-      const rows = await getStoredPlatformAccounts();
-      setConnections(Object.fromEntries(rows.map((row: any) => [row.provider, {
-        provider: row.provider, provider_user_id: row.accountId, display_name: row.displayName
-      }])));
-    } catch {}
-  }
-
-  useEffect(() => {
-    refreshConnections();
-    const appState = AppState.addEventListener("change", state => {
-      if (state === "active") refreshConnections();
-    });
-    const deepLink = Linking.addEventListener("url", () => refreshConnections());
-    return () => { appState.remove(); deepLink.remove(); };
-  }, []);
-
-  async function connectAccount(provider: "steam" | "xbox" | "minecraft") {
-    try {
-      setConnecting(provider);
-      const account = provider === "steam" ? await connectSteam() : provider === "minecraft" ? await connectMinecraft() : await connectXbox();
-      setConnections(old => ({ ...old, [provider]: {
-        provider, provider_user_id: account.accountId,
-        display_name: account.displayName || (provider === "steam" ? "Steam " + account.accountId : provider === "minecraft" ? "Minecraft player" : "Xbox player")
-      } }));
-      Alert.alert("Account connected", (account.displayName || provider) + " is saved securely on this device.");
-    } catch (error) {
-      Alert.alert("Could not connect account", error instanceof Error ? error.message : "Please try again.");
-    } finally {
-      setConnecting(null);
-    }
-  }
-
-  const platforms = [
-    { name: "Xbox", provider: "xbox", supported: true, detail: "Microsoft account / Xbox profile" },
-    { name: "Minecraft", provider: "minecraft", supported: true, detail: "Microsoft account / Minecraft profile" },
-    { name: "Steam", provider: "steam", supported: true, detail: "Steam account identity" },
-  ];
-
-  return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-    <Text style={s.eyebrow}>YOUR GAMING ACCOUNTS</Text><Text style={s.heading}>Accounts & games</Text>
-    <View style={s.libraryHero}><Gamepad2 color={C.purple2} size={25} /><View style={{ flex: 1 }}><Text style={s.cardTitle}>One place for your platforms</Text><Text style={s.smallMuted}>Connect accounts to bring your gaming identity into Respawn.</Text></View><Link2 color={C.purple2} size={20} /></View>
-    <SectionTitle title="Connect your accounts" />
-    
-    {platforms.map(item => {
-      const linked = connections[item.provider];
-      return <View key={item.provider} style={s.platformRow}>
-        <View style={s.platformIcon}><Gamepad color={C.purple2} size={19} /></View>
-        <View style={{ flex: 1 }}>
-          <Text style={s.platformName}>{item.name}</Text>
-          <Text style={s.smallMuted}>{linked ? linked.display_name || "Account connected" : item.detail}</Text>
-        </View>
-        {item.supported ? <Pressable disabled={!!connecting} onPress={() => connectAccount(item.provider as "steam" | "xbox" | "minecraft")} style={[s.joinSmall, (connecting === item.provider) && { opacity: 0.5 }]}>
-          <Text style={s.joinSmallText}>{connecting === item.provider ? "Opening..." : linked ? "Reconnect" : "Sign in"}</Text>
-        </Pressable> : <View style={s.notConnected}><CircleDot color={C.muted} size={12} /><Text style={s.notConnectedText}>Not available yet</Text></View>}
-      </View>;
-    })}
-    <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Steam uses Steam sign-in. Xbox and Minecraft use the official Microsoft sign-in page. Respawn never asks for or stores your gaming passwords.</Text></View>
-    <SectionTitle title="Your game library" />
-    <View style={s.searchBox}><Search color={C.muted} size={19} /><TextInput value={query} onChangeText={setQuery} placeholder="Search your games..." placeholderTextColor={C.muted} style={s.searchInput} /></View>
-    {shown.map(g => <View key={g.name} style={s.libraryRow}><GameTile game={g} compact /><Pressable onPress={() => setSaved(old => old.includes(g.name) ? old.filter(x => x !== g.name) : [...old, g.name])} style={[s.saveButton, saved.includes(g.name) && s.savedButton]}><Text style={s.saveButtonText}>{saved.includes(g.name) ? "Added" : "Add"}</Text></Pressable></View>)}
-  </ScrollView>;
-}
-function MessagesScreen() {
-  const [selected, setSelected] = useState("All");
-  const [draft, setDraft] = useState("");
-  const [sent, setSent] = useState<string[]>([]);
-  const chats = [{ name: "Fortnite LFG", last: "Anyone running ranked tonight?", time: "2m", color: "#7954D8", unread: 3 }, { name: "Nova", last: "That last match was wild 😂", time: "18m", color: "#A78BFA", unread: 1 }, { name: "Minecraft Builders", last: "Shared a new world screenshot", time: "1h", color: "#438B58", unread: 0 }, { name: "Kai", last: "I'm on after dinner", time: "3h", color: "#55B98A", unread: 0 }];
-  return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-    <Text style={s.eyebrow}>YOUR PEOPLE, ONE PLACE</Text><Text style={s.heading}>Messages</Text>
-    <View style={s.searchBox}><Search color={C.muted} size={19} /><TextInput placeholder="Search conversations..." placeholderTextColor={C.muted} style={s.searchInput} /></View>
-    <View style={s.messageFilters}>{["All", "Unread", "Groups"].map(f => <Pressable key={f} onPress={() => setSelected(f)} style={[s.filterChip, selected === f && s.filterChipActive]}><Text style={[s.filterText, selected === f && s.filterTextActive]}>{f}</Text></Pressable>)}</View>
-    {chats.filter(c => selected !== "Unread" || c.unread > 0).filter(c => selected !== "Groups" || c.name !== "Nova" && c.name !== "Kai").map(c => <Pressable key={c.name} style={s.chatRow}><Avatar label={c.name} color={c.color} size={48} /><View style={{ flex: 1 }}><View style={s.chatTitleRow}><Text style={s.personName}>{c.name}</Text><Text style={s.chatTime}>{c.time}</Text></View><Text style={s.smallMuted} numberOfLines={1}>{c.last}</Text></View>{c.unread > 0 ? <View style={s.unreadBadge}><Text style={s.unreadText}>{c.unread}</Text></View> : null}</Pressable>)}
-    <View style={s.chatPreview}><Text style={s.eyebrow}>QUICK NOTE</Text><Text style={s.cardTitle}>Messaging preview</Text><Text style={s.smallMuted}>The chat list is sample content. Real-time direct messages, group chats and voice rooms need the secure backend connection.</Text><View style={s.composeRow}><TextInput value={draft} onChangeText={setDraft} placeholder="Write a local note..." placeholderTextColor={C.muted} style={s.composeInput} /><Pressable onPress={() => { if (draft.trim()) { setSent(old => [draft.trim(), ...old]); setDraft(""); } }} style={s.sendButton}><Send color="#fff" size={17} /></Pressable></View>{sent.map((m, i) => <Text key={i} style={s.sentNote}>{m}</Text>)}</View>
-  </ScrollView>;
-}
-
-function ProfileScreen() {
-  const { signOut, isGuest } = useAuth();
-  const [following, setFollowing] = useState(false);
-  const [connections, setConnections] = useState<Record<string, any>>({});
-  const [playerProfile, setPlayerProfile] = useState<any>(null);
-  useEffect(() => {
-    const refreshConnections = () => {
-      getStoredPlatformAccounts()
-        .then(rows => setConnections(Object.fromEntries(rows.map(row => [row.provider, row]))))
-        .catch(() => {});
-    };
-    refreshConnections();
-    if (backendConfigured) getMyProfile().then(setPlayerProfile).catch(() => {});
-    const appState = AppState.addEventListener("change", state => { if (state === "active") refreshConnections(); });
-    const deepLink = Linking.addEventListener("url", refreshConnections);
-    return () => { appState.remove(); deepLink.remove(); };
-  }, []);
-  async function connect(provider: "steam" | "xbox" | "minecraft") {
-    try {
-      const account = provider === "steam" ? await connectSteam() : provider === "minecraft" ? await connectMinecraft() : await connectXbox();
-      setConnections(old => ({ ...old, [provider]: { provider, provider_user_id: account.accountId, display_name: account.displayName || (provider === "steam" ? "Steam " + account.accountId : provider === "minecraft" ? "Minecraft player" : "Xbox player") } }));
-      Alert.alert("Account connected", ((account as any).displayName || provider) + " is now saved securely on this device.");
-    } catch (error) {
-      Alert.alert("Connection unavailable", error instanceof Error ? error.message : "Could not complete account connection.");
-    }
-  }
-  return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-    <Text style={s.eyebrow}>YOUR PLAYER CARD</Text><Text style={s.heading}>Profile</Text>{isGuest ? <Text style={s.smallMuted}>Guest mode · This device</Text> : null}
-    <View style={s.profileBanner}><View style={s.bannerOrb} /><Text style={s.bannerLabel}>RESPAWN PLAYER</Text><Avatar label={playerProfile?.display_name || "P"} color={C.purple2} size={76} /><Text style={s.profileName}>{playerProfile?.display_name || "Player One"}</Text><Text style={s.handle}>@{playerProfile?.username || "playerone"} · Level 1</Text><Text style={s.profileBio}>{playerProfile?.bio || "Here for good games and better teammates."}</Text><Pressable onPress={() => Alert.alert("Profile editing", "Profile editing controls are the next profile milestone.")} style={s.primaryButton}><Text style={s.primaryButtonText}>Edit profile</Text><Settings color="#fff" size={16} /></Pressable></View>
-    <View style={s.profileStats}><View><Text style={s.statValue}>02</Text><Text style={s.statLabel}>GAMES</Text></View><View><Text style={s.statValue}>00</Text><Text style={s.statLabel}>FRIENDS</Text></View><View><Text style={s.statValue}>00</Text><Text style={s.statLabel}>GUILDS</Text></View></View>
-    <SectionTitle title="Connected platforms" />
-    {[
-      { name: "Xbox", provider: "xbox", action: () => connect("xbox") },
-      { name: "Minecraft", provider: "minecraft", action: () => connect("minecraft") },
-      { name: "Steam", provider: "steam", action: () => connect("steam") },
-    ].map(item => {
-      const linked = connections[item.provider];
-      return <View key={item.name} style={s.platformRow}>
-        <View style={s.platformIcon}><Gamepad color={C.purple2} size={19} /></View>
-        <View style={{ flex: 1 }}><Text style={s.platformName}>{item.name}</Text>{linked ? <Text style={s.smallMuted}>{linked.display_name || linked.provider_user_id}</Text> : null}</View>
-        {linked ? <Pressable onPress={() => Alert.alert("Disconnect account", "Remove this saved account from this device?", [{ text: "Cancel", style: "cancel" }, { text: "Disconnect", style: "destructive", onPress: () => { void removePlatformAccount(item.provider).then(() => setConnections(old => { const next = { ...old }; delete next[item.provider]; return next; })); } }])} style={s.joinSmall}><Text style={s.joinSmallText}>Disconnect</Text></Pressable> : item.action ? <Pressable onPress={item.action} style={s.joinSmall}><Text style={s.joinSmallText}>Connect</Text></Pressable> : <View style={s.notConnected}><CircleDot color={C.muted} size={12} /><Text style={s.notConnectedText}>Not linked</Text></View>}
-      </View>;
-    })}
-    <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Connected account tokens are kept in encrypted storage on this device. Respawn never stores your gaming passwords. Official sign-in flows must be completed before an account can be added here.</Text></View>
-    <Pressable onPress={() => void signOut()} style={s.secondarySignOut}><Text style={s.secondarySignOutText}>{isGuest ? "Exit guest mode" : "Sign out"}</Text></Pressable>
-  </ScrollView>;
-}
-
-function RespawnApp() {
-  const [tab, setTab] = useState<Tab>("Home");
-  const [showNotifications, setShowNotifications] = useState(false);
-  const nav = [
-    { name: "Home" as Tab, Icon: Home },
-    { name: "Discover" as Tab, Icon: Compass },
-    { name: "Games" as Tab, Icon: Gamepad2 },
-    { name: "Messages" as Tab, Icon: MessageCircle },
-    { name: "Profile" as Tab, Icon: UserRound }
-  ];
-  const screen = tab === "Home" ? <HomeScreen setTab={setTab} /> : tab === "Discover" ? (backendConfigured ? <LiveDiscoverScreen /> : <DiscoverScreen />) : tab === "Games" ? <GamesScreen /> : tab === "Messages" ? <LiveMessagingScreen /> : <ProfileScreen />;
-  return <SafeAreaView style={s.safe}>
-    <StatusBar barStyle="light-content" backgroundColor={C.bg} />
-    <View style={s.topBar}><View style={s.brand}><View style={s.brandMark}><Zap color="#fff" size={18} fill="#fff" /></View><Text style={s.brandText}>RESPAWN</Text><Text style={s.betaTag}>BETA</Text></View><Pressable onPress={() => setShowNotifications(v => !v)} style={s.topAvatar}><Bell color={C.text} size={19} /><View style={s.notificationDot} /></Pressable></View>
-    {showNotifications ? <Pressable onPress={() => setShowNotifications(false)} style={s.notificationPanel}><Text style={s.cardTitle}>You're all caught up</Text><Text style={s.smallMuted}>New friend requests, guild invites and updates will appear here.</Text></Pressable> : null}
-    <View style={{ flex: 1 }}>{screen}</View>
-    <View style={s.bottomNav}>{nav.map(({ name, Icon }) => <Pressable key={name} onPress={() => setTab(name)} style={s.navItem}><Icon color={tab === name ? C.purple2 : C.muted} size={21} strokeWidth={tab === name ? 2.5 : 1.8} /><Text style={[s.navLabel, tab === name && s.navLabelActive]}>{name}</Text>{tab === name ? <View style={s.navActiveDot} /> : null}</Pressable>)}</View>
-  </SafeAreaView>;
-}
-
-const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: C.bg, paddingTop: Platform.OS === "android" ? 4 : 0 },
-  topBar: { height: 58, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: 1, borderBottomColor: C.line },
-  brand: { flexDirection: "row", alignItems: "center", gap: 9 },
-  brandMark: { width: 30, height: 30, borderRadius: 10, backgroundColor: C.purple, alignItems: "center", justifyContent: "center" },
-  brandText: { color: C.text, fontSize: 16, fontWeight: "900", letterSpacing: 2.2 },
-  betaTag: { color: C.purple2, fontSize: 9, fontWeight: "900", letterSpacing: 1, backgroundColor: "#8B5CF625", paddingHorizontal: 6, paddingVertical: 4, borderRadius: 5 },
-  topAvatar: { width: 37, height: 37, borderRadius: 13, backgroundColor: C.panel2, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: C.line },
-  notificationDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: C.orange, position: "absolute", right: 8, top: 7, borderWidth: 1, borderColor: C.panel },
-  content: { paddingHorizontal: 19, paddingTop: 22, paddingBottom: 26, gap: 14 },
-  greetingRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 2 },
-  eyebrow: { color: C.muted, fontSize: 9, letterSpacing: 1.7, fontWeight: "900", marginBottom: 6 },
-  heading: { color: C.text, fontSize: 27, fontWeight: "900", letterSpacing: -0.8 },
-  iconButton: { width: 42, height: 42, borderRadius: 14, backgroundColor: C.panel, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: C.line },
-  hero: { backgroundColor: "#21173A", borderRadius: 23, padding: 21, overflow: "hidden", minHeight: 220, justifyContent: "center", borderWidth: 1, borderColor: "#49356C" },
-  heroOrb: { position: "absolute", width: 210, height: 210, borderRadius: 110, backgroundColor: "#8B5CF625", right: -55, top: -55 },
-  heroEyebrow: { color: "#C8B5FF", fontSize: 9, letterSpacing: 2, fontWeight: "900", marginBottom: 9 },
-  heroTitle: { color: "#fff", fontSize: 32, fontWeight: "900", lineHeight: 34, letterSpacing: -1 },
-  heroText: { color: "#C5BBD9", fontSize: 12, marginTop: 9, maxWidth: 220, lineHeight: 18 },
-  primaryButton: { backgroundColor: C.purple, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: 8, marginTop: 16 },
-  primaryButtonText: { color: "#fff", fontSize: 11, fontWeight: "900" },
-  heroStamp: { position: "absolute", right: 25, bottom: 31, width: 76, height: 76, borderRadius: 24, backgroundColor: "#FFFFFF12", alignItems: "center", justifyContent: "center", transform: [{ rotate: "-9deg" }] },
-  statRow: { flexDirection: "row", gap: 8 },
-  statCard: { flex: 1, backgroundColor: C.panel, borderRadius: 14, padding: 12, borderWidth: 1, borderColor: C.line },
-  statValue: { color: C.text, fontSize: 20, fontWeight: "900" },
-  statLabel: { color: C.muted, fontSize: 7, fontWeight: "900", letterSpacing: 0.8, marginTop: 4 },
-  sectionHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 9, marginBottom: 1 },
-  sectionTitle: { color: C.text, fontSize: 15, fontWeight: "900", letterSpacing: -0.2 },
-  link: { color: C.purple2, fontSize: 11, fontWeight: "800" },
-  panel: { backgroundColor: C.panel, borderRadius: 16, paddingHorizontal: 13, borderWidth: 1, borderColor: C.line },
-  personRow: { flexDirection: "row", alignItems: "center", gap: 11, paddingVertical: 12 },
-  topBorder: { borderTopWidth: 1, borderTopColor: C.line },
-  personName: { color: C.text, fontSize: 12, fontWeight: "800" },
-  smallMuted: { color: C.muted, fontSize: 10, marginTop: 4 },
-  onlinePill: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "#45D48318", paddingHorizontal: 8, paddingVertical: 5, borderRadius: 20 },
-  greenDot: { width: 6, height: 6, borderRadius: 4, backgroundColor: C.green },
-  onlineText: { color: C.green, fontSize: 8, fontWeight: "900" },
-  communityCard: { backgroundColor: C.panel, borderWidth: 1, borderColor: C.line, borderRadius: 15, padding: 12, flexDirection: "row", alignItems: "center", gap: 11 },
-  communityIcon: { width: 42, height: 42, borderRadius: 13, alignItems: "center", justifyContent: "center" },
-  cardTitle: { color: C.text, fontSize: 12, fontWeight: "800" },
-  joinSmall: { backgroundColor: C.purple, borderRadius: 9, paddingHorizontal: 13, paddingVertical: 8 },
-  joinSmallText: { color: "#fff", fontSize: 10, fontWeight: "900" },
-  joinedButton: { backgroundColor: "#314A3D" },
-  gameTile: { flexDirection: "row", alignItems: "center", gap: 11, backgroundColor: C.panel, borderWidth: 1, borderColor: C.line, padding: 9, borderRadius: 14, flex: 1 },
-  gameTileCompact: { padding: 8 },
-  gameArt: { width: 48, height: 48, borderRadius: 11, alignItems: "center", justifyContent: "center", overflow: "hidden" },
-  gameMark: { color: "#fff", fontSize: 25, fontWeight: "900", textShadowColor: "#0008", textShadowRadius: 8 },
-  artGlow: { position: "absolute", width: 35, height: 35, borderRadius: 20, borderWidth: 1, borderColor: "#FFFFFF30", top: -15, right: -12 },
-  gameName: { color: C.text, fontSize: 11, fontWeight: "900" },
-  searchBox: { height: 48, backgroundColor: C.panel, borderWidth: 1, borderColor: C.line, borderRadius: 14, paddingHorizontal: 13, flexDirection: "row", alignItems: "center", gap: 10, marginTop: 3 },
-  searchInput: { flex: 1, color: C.text, fontSize: 11, paddingVertical: 0 },
-  filterRow: { flexDirection: "row", gap: 8, paddingVertical: 2 },
-  filterChip: { borderRadius: 30, paddingHorizontal: 15, paddingVertical: 9, backgroundColor: C.panel, borderWidth: 1, borderColor: C.line },
-  filterChipActive: { backgroundColor: "#8B5CF630", borderColor: C.purple },
-  filterText: { color: C.muted, fontSize: 10, fontWeight: "800" },
-  filterTextActive: { color: C.purple2 },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  discoverGame: { width: "48%", backgroundColor: C.panel, borderWidth: 1, borderColor: C.line, borderRadius: 15, padding: 9 },
-  discoverArt: { height: 88, borderRadius: 10, alignItems: "center", justifyContent: "center", marginBottom: 9, overflow: "hidden" },
-  discoverMark: { color: "#fff", fontSize: 38, fontWeight: "900" },
-  personCard: { flexDirection: "row", alignItems: "center", gap: 11, backgroundColor: C.panel, borderWidth: 1, borderColor: C.line, borderRadius: 15, padding: 12 },
-  handle: { color: C.muted, fontSize: 10, fontWeight: "500" },
-  lfgText: { color: C.green, fontSize: 9, marginTop: 5, fontWeight: "800" },
-  iconButtonSmall: { width: 34, height: 34, borderRadius: 11, backgroundColor: C.panel2, alignItems: "center", justifyContent: "center" },
-  infoNote: { flexDirection: "row", alignItems: "flex-start", gap: 9, backgroundColor: "#8B5CF612", borderWidth: 1, borderColor: "#8B5CF638", borderRadius: 12, padding: 12, marginTop: 4 },
-  infoText: { color: "#B8B3CB", fontSize: 10, lineHeight: 15, flex: 1 },
-  libraryHero: { backgroundColor: "#201735", borderColor: "#49356C", borderWidth: 1, borderRadius: 16, padding: 15, flexDirection: "row", alignItems: "center", gap: 12 },
-  libraryRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  saveButton: { borderWidth: 1, borderColor: C.line, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },
-  savedButton: { backgroundColor: "#8B5CF625", borderColor: C.purple },
-  saveButtonText: { color: C.text, fontSize: 9, fontWeight: "900" },
-  messageFilters: { flexDirection: "row", gap: 8 },
-  chatRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 13, borderBottomWidth: 1, borderBottomColor: C.line },
-  chatTitleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  chatTime: { color: C.muted, fontSize: 9 },
-  unreadBadge: { width: 20, height: 20, borderRadius: 10, backgroundColor: C.purple, alignItems: "center", justifyContent: "center" },
-  unreadText: { color: "#fff", fontSize: 9, fontWeight: "900" },
-  chatPreview: { backgroundColor: C.panel, borderWidth: 1, borderColor: C.line, borderRadius: 15, padding: 14, gap: 8, marginTop: 8 },
-  composeRow: { flexDirection: "row", gap: 8, marginTop: 7 },
-  composeInput: { flex: 1, backgroundColor: C.panel2, borderRadius: 10, paddingHorizontal: 12, color: C.text, fontSize: 11 },
-  sendButton: { width: 40, height: 40, backgroundColor: C.purple, borderRadius: 11, alignItems: "center", justifyContent: "center" },
-  sentNote: { color: C.text, backgroundColor: C.panel2, borderRadius: 8, padding: 9, fontSize: 10 },
-  profileBanner: { backgroundColor: "#201735", borderRadius: 20, borderWidth: 1, borderColor: "#49356C", alignItems: "center", padding: 20, overflow: "hidden" },
-  bannerOrb: { position: "absolute", width: 220, height: 140, borderRadius: 100, backgroundColor: "#8B5CF630", top: -65 },
-  bannerLabel: { color: "#C8B5FF", fontSize: 8, letterSpacing: 2, fontWeight: "900", marginBottom: 15 },
-  profileName: { color: C.text, fontSize: 21, fontWeight: "900", marginTop: 9 },
-  profileBio: { color: "#B9B2C9", fontSize: 10, marginTop: 7 },
-  profileStats: { flexDirection: "row", justifyContent: "space-around", backgroundColor: C.panel, borderWidth: 1, borderColor: C.line, borderRadius: 15, padding: 14 },
-  platformRow: { flexDirection: "row", alignItems: "center", gap: 11, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.line },
-  platformIcon: { width: 36, height: 36, borderRadius: 11, backgroundColor: C.panel2, alignItems: "center", justifyContent: "center" },
-  platformName: { color: C.text, fontSize: 11, fontWeight: "800", flex: 1 },
-  notConnected: { flexDirection: "row", alignItems: "center", gap: 5 },
-  notConnectedText: { color: C.muted, fontSize: 9 },
-  secondarySignOut: { alignSelf: "center", padding: 12 },
-  secondarySignOutText: { color: "#FF9D8C", fontSize: 11, fontWeight: "800" },
-  bottomNav: { height: 67, backgroundColor: "#101019", borderTopWidth: 1, borderTopColor: C.line, flexDirection: "row", justifyContent: "space-around", alignItems: "center", paddingBottom: Platform.OS === "ios" ? 5 : 2 },
-  navItem: { flex: 1, alignItems: "center", justifyContent: "center", gap: 4, height: "100%" },
-  navLabel: { color: C.muted, fontSize: 8, fontWeight: "700" },
-  navLabelActive: { color: C.purple2, fontWeight: "900" },
-  navActiveDot: { position: "absolute", bottom: 3, width: 14, height: 2, borderRadius: 2, backgroundColor: C.purple2 },
-  notificationPanel: { marginHorizontal: 15, marginTop: 8, backgroundColor: C.panel2, borderColor: C.line, borderWidth: 1, borderRadius: 13, padding: 14, zIndex: 3 }
-});
-
-
-export default function App() {
-  return <AuthGate><RespawnApp /></AuthGate>;
-}
+const s=StyleSheet.create({safe:{flex:1,backgroundColor:C.bg},topbar:{height:61,paddingHorizontal:19,flexDirection:"row",alignItems:"center",gap:11,borderBottomWidth:1,borderBottomColor:C.line},brandMark:{width:39,height:39,borderRadius:13,backgroundColor:"#8B5CF622",alignItems:"center",justifyContent:"center",borderWidth:1,borderColor:"#8B5CF655"},brand:{color:C.text,fontSize:14,fontWeight:"900",letterSpacing:2},tagline:{color:C.muted,fontSize:8,letterSpacing:1.4,marginTop:2},levelPill:{flexDirection:"row",alignItems:"center",gap:5,backgroundColor:C.panel2,paddingHorizontal:11,paddingVertical:8,borderRadius:20,borderWidth:1,borderColor:C.line},levelPillText:{color:C.lav,fontSize:10,fontWeight:"900"},content:{padding:18,paddingBottom:28,gap:13},headingRow:{flexDirection:"row",justifyContent:"space-between",alignItems:"center",marginBottom:4},eyebrow:{color:C.muted,fontSize:9,fontWeight:"900",letterSpacing:1.7,marginBottom:5},heading:{color:C.text,fontSize:26,fontWeight:"900",letterSpacing:-.7},hero:{backgroundColor:"#211735",borderColor:"#49356C",borderWidth:1,borderRadius:22,padding:19,gap:9,overflow:"hidden"},heroEyebrow:{color:C.lav,fontSize:9,fontWeight:"900",letterSpacing:1.8},heroTitle:{color:"#fff",fontSize:25,fontWeight:"900",lineHeight:29},heroSub:{color:"#C4BBD6",fontSize:11,lineHeight:17},progressTrack:{height:7,backgroundColor:"#FFFFFF20",borderRadius:8,overflow:"hidden",marginTop:7},progressFill:{height:7,backgroundColor:C.lav,borderRadius:8},progressText:{color:"#D4C8F2",fontSize:8,fontWeight:"900",letterSpacing:1},levelBig:{fontSize:38,color:"#fff",fontWeight:"900"},stats:{flexDirection:"row",gap:8},card:{backgroundColor:C.panel,borderColor:C.line,borderWidth:1,borderRadius:15,padding:13},statCard:{flex:1,padding:12,gap:4},statNum:{color:C.text,fontSize:21,fontWeight:"900"},statLabel:{color:C.muted,fontSize:7,fontWeight:"900",letterSpacing:.8},sectionHead:{flexDirection:"row",justifyContent:"space-between",alignItems:"center",marginTop:8},sectionTitle:{color:C.text,fontSize:15,fontWeight:"900"},link:{color:C.lav,fontSize:10,fontWeight:"800"},gameRow:{flexDirection:"row",alignItems:"center",gap:11,backgroundColor:C.panel,borderWidth:1,borderColor:C.line,borderRadius:14,padding:9},gameArt:{width:47,height:47,borderRadius:11,alignItems:"center",justifyContent:"center"},gameMark:{color:"#fff",fontSize:24,fontWeight:"900"},cardTitle:{color:C.text,fontSize:11,fontWeight:"800"},muted:{color:C.muted,fontSize:9,marginTop:4},smallAction:{backgroundColor:"#8B5CF630",borderColor:"#8B5CF660",borderWidth:1,borderRadius:9,paddingHorizontal:12,paddingVertical:8},smallActionText:{color:C.lav,fontSize:9,fontWeight:"900"},search:{height:46,backgroundColor:C.panel,borderColor:C.line,borderWidth:1,borderRadius:13,paddingHorizontal:12,flexDirection:"row",alignItems:"center",gap:9},searchInput:{flex:1,color:C.text,fontSize:11},chips:{flexDirection:"row",gap:8},chip:{paddingHorizontal:15,paddingVertical:9,borderRadius:20,backgroundColor:C.panel,borderWidth:1,borderColor:C.line},chipActive:{backgroundColor:"#8B5CF630",borderColor:C.purple},chipText:{color:C.muted,fontSize:9,fontWeight:"800"},chipTextActive:{color:C.lav},countPill:{backgroundColor:C.panel2,borderRadius:20,padding:8},countText:{color:C.lav,fontSize:8,fontWeight:"900"},footnote:{color:C.muted,fontSize:9,lineHeight:14,marginTop:5},btn:{backgroundColor:C.purple,borderRadius:11,padding:13,alignItems:"center",marginTop:5},btnText:{color:"#fff",fontSize:10,fontWeight:"900"},btnSecondary:{backgroundColor:C.panel2,borderColor:C.line,borderWidth:1},btnSecondaryText:{color:C.text},featureCard:{gap:9,backgroundColor:"#1D1730",borderColor:"#49356C"},missionRow:{flexDirection:"row",alignItems:"center",gap:10},missionIcon:{width:34,height:34,borderRadius:10,backgroundColor:"#8B5CF622",alignItems:"center",justifyContent:"center"},missionStatus:{color:C.green,fontSize:9,fontWeight:"900"},builderHero:{gap:8,backgroundColor:"#1D1730",borderColor:"#49356C"},builderTitle:{color:C.text,fontSize:20,fontWeight:"900"},partRow:{flexDirection:"row",alignItems:"center",gap:11,backgroundColor:C.panel,borderWidth:1,borderColor:C.line,borderRadius:13,padding:12},partIcon:{width:37,height:37,borderRadius:10,backgroundColor:C.panel2,alignItems:"center",justifyContent:"center"},change:{color:C.lav,fontSize:8,fontWeight:"900"},priceCard:{gap:9,borderColor:"#49356C"},price:{color:C.lav,fontSize:34,fontWeight:"900"},nameInput:{backgroundColor:C.panel2,borderColor:C.line,borderWidth:1,borderRadius:10,padding:11,color:C.text,fontSize:11},savedSetup:{flexDirection:"row",alignItems:"center"},remove:{color:"#FF9D8C",fontSize:8,fontWeight:"900"},missionCard:{flexDirection:"row",alignItems:"center",gap:10},missionType:{color:C.lav,fontSize:8,fontWeight:"900",letterSpacing:1,marginBottom:5},completeButton:{width:65,height:37,borderRadius:10,backgroundColor:C.purple,alignItems:"center",justifyContent:"center"},doneButton:{backgroundColor:"#214635"},completeText:{color:"#fff",fontSize:9,fontWeight:"900"},profileCard:{alignItems:"center",padding:20,gap:9,backgroundColor:"#1D1730",borderColor:"#49356C"},avatar:{width:65,height:65,borderRadius:22,backgroundColor:"#8B5CF633",alignItems:"center",justifyContent:"center"},profileName:{color:C.text,fontSize:20,fontWeight:"900"},profileStats:{flexDirection:"row",justifyContent:"space-around",width:"100%",marginTop:10,paddingTop:15,borderTopWidth:1,borderTopColor:C.line},infoRow:{flexDirection:"row",alignItems:"center",gap:10},infoValue:{marginLeft:"auto",color:C.lav,fontSize:9,fontWeight:"900"},nav:{height:67,backgroundColor:"#101019",borderTopWidth:1,borderTopColor:C.line,flexDirection:"row",justifyContent:"space-around",alignItems:"center"},navItem:{flex:1,alignItems:"center",justifyContent:"center",gap:4,height:"100%"},navLabel:{color:C.muted,fontSize:8,fontWeight:"700"},navLabelActive:{color:C.lav,fontWeight:"900"},navDot:{position:"absolute",bottom:3,width:13,height:2,borderRadius:2,backgroundColor:C.lav}});
