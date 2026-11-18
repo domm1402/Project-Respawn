@@ -66,7 +66,7 @@ function GameTile({ game, compact = false, onPress }: { game: typeof games[numbe
 function HomeScreen({ setTab }: { setTab: (tab: Tab) => void }) {
   return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
     <View style={s.greetingRow}>
-      <View><Text style={s.eyebrow}>TUESDAY, NOVEMBER 18</Text><Text style={s.heading}>Your lobby, <Text style={{ color: C.purple2 }}>your rules.</Text></Text></View>
+      <View><Text style={s.eyebrow}>YOUR GAMING HOME</Text><Text style={s.heading}>Your lobby, <Text style={{ color: C.purple2 }}>your rules.</Text></Text></View>
       <Pressable style={s.iconButton}><Bell color={C.text} size={20} /><View style={s.notificationDot} /></Pressable>
     </View>
     <View style={s.hero}>
