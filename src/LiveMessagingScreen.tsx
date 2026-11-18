@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { createDirectConversation, listDirectConversations, listDirectMessages, sendDirectMessage, subscribeToDirectMessages } from "./api";
+import { createDirectConversation, listDirectConversations, listDirectMessages, searchPlayers, sendDirectMessage, subscribeToDirectMessages } from "./api";
 import VoiceRoomScreen from "./VoiceRoomScreen";
 
 type Conversation = { id: string; title: string | null; is_group: boolean; created_at: string };
@@ -12,6 +12,7 @@ export default function LiveMessagingScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [participantId, setParticipantId] = useState("");
+  const [players, setPlayers] = useState<Array<{id:string;username:string;display_name:string}>>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [voiceOpen, setVoiceOpen] = useState(false);
@@ -32,11 +33,18 @@ export default function LiveMessagingScreen() {
     return () => { alive = false; unsubscribe(); };
   }, [active?.id]);
 
-  async function startConversation() {
+  async function findPlayers() {
+    setBusy(true); setError("");
+    try { setPlayers(await searchPlayers(participantId) as typeof players); }
+    catch (e) { setError(e instanceof Error ? e.message : "Player search failed."); }
+    finally { setBusy(false); }
+  }
+
+  async function startConversation(targetId = participantId) {
     if (!participantId.trim()) return;
     setBusy(true); setError("");
     try {
-      const conversation = await createDirectConversation([participantId.trim()]);
+      const conversation = await createDirectConversation([targetId.trim()]);
       setActive(conversation as Conversation); setParticipantId(""); await refresh();
     } catch (e) { setError(e instanceof Error ? e.message : "Could not create conversation."); }
     finally { setBusy(false); }
@@ -62,9 +70,10 @@ export default function LiveMessagingScreen() {
     {!active ? <>
       <Text style={styles.sub}>Start a private conversation using the other player's Respawn profile ID.</Text>
       <View style={styles.startRow}>
-        <TextInput value={participantId} onChangeText={setParticipantId} placeholder="Player profile UUID" placeholderTextColor="#89879C" style={styles.input} autoCapitalize="none" />
-        <Pressable onPress={startConversation} disabled={busy || !participantId.trim()} style={styles.button}>{busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Start</Text>}</Pressable>
+        <TextInput value={participantId} onChangeText={setParticipantId} placeholder="Search username or display name" placeholderTextColor="#89879C" style={styles.input} autoCapitalize="none" />
+        <Pressable onPress={findPlayers} disabled={busy || participantId.trim().length < 2} style={styles.button}>{busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Search</Text>}</Pressable>
       </View>
+      {players.map(p => <View key={p.id} style={styles.conversation}><View style={styles.avatar}><Text style={styles.avatarText}>{p.display_name.slice(0,1).toUpperCase()}</Text></View><View style={{flex:1}}><Text style={styles.name}>{p.display_name}</Text><Text style={styles.meta}>@{p.username}</Text></View><Pressable onPress={() => startConversation(p.id)} style={styles.button}><Text style={styles.buttonText}>Message</Text></Pressable></View>)}
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 8 }}>
         {conversations.map(c => <Pressable key={c.id} onPress={() => setActive(c)} style={styles.conversation}>
           <View style={styles.avatar}><Text style={styles.avatarText}>{(c.title || (c.is_group ? "Group" : "DM")).slice(0,1).toUpperCase()}</Text></View>
