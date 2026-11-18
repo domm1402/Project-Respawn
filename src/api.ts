@@ -53,43 +53,101 @@ export const connectSteam = async () => {
   return { provider: "steam", accountId: steamId };
 };
 
-export const connectXbox = async () => {
+const getMicrosoftAccessToken = async () => {
   const clientId = process.env.EXPO_PUBLIC_MICROSOFT_CLIENT_ID;
-  if (!clientId) throw new Error("Add EXPO_PUBLIC_MICROSOFT_CLIENT_ID to the app build to enable Microsoft/Xbox sign-in.");
+  if (!clientId) throw new Error("Add EXPO_PUBLIC_MICROSOFT_CLIENT_ID to the app build to enable Microsoft sign-in.");
   const discovery = await AuthSession.fetchDiscoveryAsync("https://login.microsoftonline.com/consumers/v2.0");
   const redirectUri = AuthSession.makeRedirectUri({ scheme: "respawn", path: "microsoft-auth" });
   const request = new AuthSession.AuthRequest({
     clientId, redirectUri, responseType: AuthSession.ResponseType.Code,
-    scopes: ["openid", "profile", "offline_access", "User.Read", "XboxLive.signin"],
+    scopes: ["openid", "profile", "offline_access", "XboxLive.signin"],
     usePKCE: true
   });
   const auth = await request.promptAsync(discovery);
-  if (auth.type !== "success" || !auth.params.code || !request.codeVerifier) throw new Error("Microsoft sign-in was cancelled or did not return an authorization code.");
+  if (auth.type !== "success" || !auth.params.code || !request.codeVerifier) {
+    throw new Error("Microsoft sign-in was cancelled or did not return an authorization code.");
+  }
   const tokens = await AuthSession.exchangeCodeAsync({
-    clientId, code: auth.params.code, redirectUri, extraParams: { code_verifier: request.codeVerifier }
+    clientId, code: auth.params.code, redirectUri,
+    extraParams: { code_verifier: request.codeVerifier }
   }, discovery);
   if (!tokens.accessToken) throw new Error("Microsoft did not return an access token.");
+  return { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken };
+};
+
+const getXboxIdentity = async (microsoftAccessToken: string, relyingParty = "http://xboxlive.com") => {
   const xboxAuth = await fetch("https://user.auth.xboxlive.com/user/authenticate", {
     method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
-    body: JSON.stringify({ Properties: { AuthMethod: "RPS", SiteName: "user.auth.xboxlive.com", RpsTicket: "d=" + tokens.accessToken }, RelyingParty: "http://auth.xboxlive.com", TokenType: "JWT" })
+    body: JSON.stringify({
+      Properties: { AuthMethod: "RPS", SiteName: "user.auth.xboxlive.com", RpsTicket: "d=" + microsoftAccessToken },
+      RelyingParty: "http://auth.xboxlive.com", TokenType: "JWT"
+    })
   });
   const xboxData = await xboxAuth.json();
-  if (!xboxAuth.ok || !xboxData.Token) throw new Error("Microsoft sign-in succeeded, but Xbox Live did not accept the account token.");
+  if (!xboxAuth.ok || !xboxData.Token) throw new Error("Microsoft sign-in succeeded, but Xbox Live did not accept this account.");
   const xstsResponse = await fetch("https://xsts.auth.xboxlive.com/xsts/authorize", {
     method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" },
-    body: JSON.stringify({ Properties: { SandboxId: "RETAIL", UserTokens: [xboxData.Token] }, RelyingParty: "http://xboxlive.com", TokenType: "JWT" })
+    body: JSON.stringify({
+      Properties: { SandboxId: "RETAIL", UserTokens: [xboxData.Token] },
+      RelyingParty: relyingParty, TokenType: "JWT"
+    })
   });
   const xsts = await xstsResponse.json();
-  if (!xstsResponse.ok || !xsts.Token) throw new Error(xsts.XErr ? "Xbox Live rejected this account (code " + xsts.XErr + ")." : "Xbox Live authentication failed.");
-  const xuid = xsts.DisplayClaims?.xui?.[0]?.xid;
-  if (!xuid) throw new Error("Xbox Live did not return an Xbox profile ID.");
-  const profileResponse = await fetch("https://profile.xboxlive.com/users/xuid(" + xuid + ")/profile/settings?settings=Gamertag", {
-    headers: { "x-xbl-contract-version": "2", "Authorization": "XBL3.0 x=" + xsts.DisplayClaims.xui[0].uhs + ";" + xsts.Token }
+  if (!xstsResponse.ok || !xsts.Token) {
+    throw new Error(xsts.XErr ? "Xbox authentication was rejected (code " + xsts.XErr + ")." : "Xbox authentication failed.");
+  }
+  const user = xsts.DisplayClaims?.xui?.[0];
+  if (!user?.uhs) throw new Error("Xbox authentication did not return a user hash.");
+  return { token: xsts.Token as string, userHash: user.uhs as string, xuid: user.xid as string | undefined };
+};
+
+export const connectXbox = async () => {
+  const microsoft = await getMicrosoftAccessToken();
+  const xbox = await getXboxIdentity(microsoft.accessToken);
+  if (!xbox.xuid) throw new Error("Xbox Live did not return an Xbox profile ID.");
+  const profileResponse = await fetch("https://profile.xboxlive.com/users/xuid(" + xbox.xuid + ")/profile/settings?settings=Gamertag", {
+    headers: { "x-xbl-contract-version": "2", "Authorization": "XBL3.0 x=" + xbox.userHash + ";" + xbox.token }
   });
   const profile = await profileResponse.json();
   const gamertag = profile.profileUsers?.[0]?.settings?.find((item: any) => item.id === "Gamertag")?.value || "Xbox player";
-  await storePlatformAccount({ provider: "xbox", accountId: String(xuid), displayName: gamertag, accessToken: xsts.Token, refreshToken: tokens.refreshToken });
-  return { provider: "xbox", accountId: String(xuid), displayName: gamertag };
+  await storePlatformAccount({
+    provider: "xbox", accountId: String(xbox.xuid), displayName: gamertag,
+    accessToken: xbox.token, refreshToken: microsoft.refreshToken
+  });
+  return { provider: "xbox", accountId: String(xbox.xuid), displayName: gamertag };
+};
+
+export const connectMinecraft = async () => {
+  const microsoft = await getMicrosoftAccessToken();
+  const xbox = await getXboxIdentity(microsoft.accessToken, "rp://api.minecraftservices.com/");
+  const minecraftLogin = await fetch("https://api.minecraftservices.com/authentication/login_with_xbox", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ identityToken: "XBL3.0 x=" + xbox.userHash + ";" + xbox.token })
+  });
+  const minecraftTokens = await minecraftLogin.json();
+  if (!minecraftLogin.ok || !minecraftTokens.access_token) {
+    throw new Error("Microsoft sign-in worked, but Minecraft authentication failed. Make sure this Microsoft account owns Minecraft.");
+  }
+  const entitlementsResponse = await fetch("https://api.minecraftservices.com/entitlements/mcstore", {
+    headers: { "Authorization": "Bearer " + minecraftTokens.access_token }
+  });
+  const entitlements = await entitlementsResponse.json();
+  if (!entitlementsResponse.ok || !Array.isArray(entitlements.items) || entitlements.items.length === 0) {
+    throw new Error("This Microsoft account does not appear to have Minecraft Java entitlements. Check that you signed into the account that owns Minecraft.");
+  }
+  const profileResponse = await fetch("https://api.minecraftservices.com/minecraft/profile", {
+    headers: { "Authorization": "Bearer " + minecraftTokens.access_token }
+  });
+  const profile = await profileResponse.json();
+  if (!profileResponse.ok || !profile.id || !profile.name) {
+    throw new Error("Minecraft authentication succeeded, but no Minecraft profile was found for this account.");
+  }
+  await storePlatformAccount({
+    provider: "minecraft", accountId: profile.id, displayName: profile.name,
+    accessToken: minecraftTokens.access_token, refreshToken: microsoft.refreshToken,
+    expiresAt: Date.now() + (Number(minecraftTokens.expires_in) || 0) * 1000
+  });
+  return { provider: "minecraft", accountId: profile.id, displayName: profile.name };
 };
 export const listPlatformConnections=()=>apiRequest("/api/platform-connections");
 export const listDirectConversations=()=>apiRequest("/api/direct-conversations");
