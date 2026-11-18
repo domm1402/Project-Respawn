@@ -50,7 +50,7 @@ export const connectSteam = async () => {
   const verificationText = await verified.text();
   if (!verified.ok || !/is_valid:true/i.test(verificationText)) throw new Error("Steam identity verification failed.");
   await storePlatformAccount({ provider: "steam", accountId: steamId, displayName: "Steam " + steamId, accessToken: "openid-verified:" + steamId });
-  return { provider: "steam", accountId: steamId };
+  return { provider: "steam", accountId: steamId, displayName: "Steam " + steamId };
 };
 
 const getMicrosoftAccessToken = async () => {
