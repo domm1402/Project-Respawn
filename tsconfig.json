@@ -5,6 +5,7 @@
     "noEmit": true
   },
   "exclude": [
-    "supabase/functions"
+    "supabase/functions",
+    "worker"
   ]
 }
