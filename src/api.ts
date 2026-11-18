@@ -185,3 +185,22 @@ export async function connectSteam() {
   if (!data?.url) throw new Error("Steam sign-in is not deployed or configured.");
   return data.url as string;
 }
+
+
+export async function connectXbox() {
+  const { data, error } = await db().functions.invoke("xbox-oauth", { body: { action: "begin" } });
+  if (error) throw error;
+  if (!data?.url) throw new Error("Xbox connection is not configured. See the backend setup guide.");
+  return data.url as string;
+}
+
+export async function listPlatformConnections() {
+  const client = db();
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) throw new Error("Sign in first.");
+  const { data, error } = await client.from("platform_connections")
+    .select("provider, provider_user_id, display_name, status, connected_at")
+    .eq("profile_id", user.id);
+  if (error) throw error;
+  return data;
+}
