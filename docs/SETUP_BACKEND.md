@@ -26,3 +26,36 @@ Voice needs a LiveKit deployment and a server-side token issuer. Steam identity 
 
 ## 7. Production checklist
 Review all SQL policies, add authorization tests, add account deletion and privacy controls, moderation review tools, storage policies, rate limiting and provider disconnect/revocation before inviting public users.
+
+
+## 8. Deploy the server functions
+
+Install the Supabase CLI and link this repository to your project:
+```bash
+supabase login
+supabase link --project-ref YOUR_PROJECT_REF
+supabase db push
+supabase functions deploy steam-openid --no-verify-jwt
+supabase functions deploy xbox-oauth --no-verify-jwt
+supabase functions deploy voice-token
+``
+
+Set function secrets in the Supabase project, never in the app:
+```bash
+supabase secrets set STEAM_CALLBACK_URL=https://YOUR_PROJECT_REF.supabase.co/functions/v1/steam-openid
+supabase secrets set XBOX_CALLBACK_URL=https://YOUR_PROJECT_REF.supabase.co/functions/v1/xbox-oauth
+supabase secrets set RESPAWN_REDIRECT_URL=respawn://platform
+supabase secrets set MICROSOFT_CLIENT_ID=YOUR_APP_CLIENT_ID
+supabase secrets set MICROSOFT_CLIENT_SECRET=YOUR_APP_CLIENT_SECRET
+supabase secrets set LIVEKIT_URL=wss://YOUR_LIVEKIT_HOST
+supabase secrets set LIVEKIT_API_KEY=YOUR_LIVEKIT_KEY
+supabase secrets set LIVEKIT_API_SECRET=YOUR_LIVEKIT_SECRET
+``
+
+For Xbox, register a Microsoft app that supports personal Microsoft accounts and the XboxLive.signin scope. Set the exact Xbox callback URL above in the app registration. Microsoft/Xbox service eligibility and API access can vary; verify the current provider terms before release.
+
+For Steam, set the exact Steam callback URL in the OpenID configuration and use HTTPS. The Edge Function validates the OpenID response server-side and stores only the verified SteamID64.
+
+For voice, deploy a LiveKit server or use a LiveKit Cloud project. The Edge Function issues short-lived room tokens after checking room membership. **The mobile LiveKit audio client still requires native SDK integration and an EAS development build; the token service alone does not make voice audio available in the current Expo Go app.**
+
+PlayStation Network linking remains blocked on official partner access. Do not use unofficial scraping or ask for a PSN password.
