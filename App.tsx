@@ -197,7 +197,6 @@ function GamesScreen() {
     { name: "Xbox", provider: "xbox", supported: true, detail: "Microsoft account / Xbox profile" },
     { name: "Minecraft", provider: "minecraft", supported: true, detail: "Microsoft account / Minecraft profile" },
     { name: "Steam", provider: "steam", supported: true, detail: "Steam account identity" },
-    { name: "Epic Games", provider: "epic", supported: false, detail: "Integration not configured yet" }
   ];
 
   return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
@@ -273,7 +272,6 @@ function ProfileScreen() {
       { name: "Xbox", provider: "xbox", action: () => connect("xbox") },
       { name: "Minecraft", provider: "minecraft", action: () => connect("minecraft") },
       { name: "Steam", provider: "steam", action: () => connect("steam") },
-      { name: "Epic Games", provider: "epic", action: undefined }
     ].map(item => {
       const linked = connections[item.provider];
       return <View key={item.name} style={s.platformRow}>
