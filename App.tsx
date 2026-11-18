@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import AuthGate from "./src/AuthGate";
 import { connectSteam, connectXbox, listPlatformConnections } from "./src/api";
 import { backendConfigured } from "./src/backend";
