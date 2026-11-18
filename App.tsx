@@ -221,7 +221,7 @@ function ProfileScreen() {
       </View>;
     })}
     <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Xbox and Steam use server-side identity verification. PlayStation's consumer game-library API is not generally available, so automatic PSN linking requires official partner access.</Text></View>
-    {supabase ? <Pressable onPress={() => supabase.auth.signOut()} style={s.secondarySignOut}><Text style={s.secondarySignOutText}>Sign out</Text></Pressable> : null}
+    {supabase ? <Pressable onPress={() => void supabase?.auth.signOut()} style={s.secondarySignOut}><Text style={s.secondarySignOutText}>Sign out</Text></Pressable> : null}
   </ScrollView>;
 }
 
