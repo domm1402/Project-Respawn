@@ -1,0 +1,7 @@
+project_id = "respawn"
+
+[functions.steam-openid]
+verify_jwt = false
+
+[functions.voice-token]
+verify_jwt = true
