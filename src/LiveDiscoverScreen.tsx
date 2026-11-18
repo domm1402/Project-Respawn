@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { createEvent, createGuild, createPost, createVoiceRoom, joinCommunity, joinGuild, listCommunities, listEvents, listFeed, listGuilds, rsvpEvent } from "./api";
+import { createCommunity, createEvent, createGuild, createPost, createVoiceRoom, joinCommunity, joinGuild, listCommunities, listEvents, listFeed, listGuilds, rsvpEvent } from "./api";
 import VoiceRoomScreen from "./VoiceRoomScreen";
 
 type Row = Record<string, any>;
@@ -15,6 +15,7 @@ export default function LiveDiscoverScreen() {
   const [postDraft, setPostDraft] = useState("");
   const [guildDraft, setGuildDraft] = useState("");
   const [eventDraft, setEventDraft] = useState("");
+  const [communityDraft, setCommunityDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [voiceRoomId, setVoiceRoomId] = useState("");
@@ -65,6 +66,8 @@ export default function LiveDiscoverScreen() {
     </> : null}
 
     {section === "Communities" ? <>
+      <Text style={styles.label}>Create a community</Text>
+      <View style={styles.inline}><TextInput value={communityDraft} onChangeText={setCommunityDraft} placeholder="Community name" placeholderTextColor="#89879C" style={styles.inputInline} /><Pressable disabled={busy || communityDraft.trim().length < 3} onPress={() => run(async () => { const name = communityDraft.trim(); await createCommunity({ name, slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now().toString().slice(-5), description: "A new Respawn community" }); setCommunityDraft(""); })} style={styles.primary}><Text style={styles.primaryText}>Create</Text></Pressable></View>
       {communities.map(c => <View key={c.id} style={styles.card}><Text style={styles.name}>{c.name}</Text><Text style={styles.meta}>{c.visibility} community</Text><Text style={styles.body}>{c.description || "A place for players to meet."}</Text><Pressable onPress={() => run(() => joinCommunity(c.id))} style={styles.secondary}><Text style={styles.secondaryText}>Join community</Text></Pressable></View>)}
       {!communities.length ? <Text style={styles.empty}>No communities are listed yet.</Text> : null}
     </> : null}
