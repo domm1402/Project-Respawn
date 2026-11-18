@@ -196,9 +196,7 @@ function GamesScreen() {
   const platforms = [
     { name: "Xbox", provider: "xbox", supported: true, detail: "Microsoft / Xbox profile" },
     { name: "Steam", provider: "steam", supported: true, detail: "Steam account identity" },
-    { name: "PlayStation Network", provider: "playstation", supported: false, detail: "Official Sony partner access required" },
-    { name: "Epic Games", provider: "epic", supported: false, detail: "Integration not configured yet" },
-    { name: "Nintendo", provider: "nintendo", supported: false, detail: "Integration not configured yet" }
+    { name: "Epic Games", provider: "epic", supported: false, detail: "Integration not configured yet" }
   ];
 
   return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
@@ -219,7 +217,7 @@ function GamesScreen() {
         </Pressable> : <View style={s.notConnected}><CircleDot color={C.muted} size={12} /><Text style={s.notConnectedText}>Not available yet</Text></View>}
       </View>;
     })}
-    <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Sign in on the official provider page. Respawn never asks for or stores your Xbox or Steam password. PlayStation, Epic and Nintendo buttons will be enabled only when supported official sign-in integrations are ready.</Text></View>
+    <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Sign in on the official provider page. Respawn never asks for or stores your Xbox or Steam password. Epic Games sign-in will be enabled when its official integration is configured.</Text></View>
     <SectionTitle title="Your game library" />
     <View style={s.searchBox}><Search color={C.muted} size={19} /><TextInput value={query} onChangeText={setQuery} placeholder="Search your games..." placeholderTextColor={C.muted} style={s.searchInput} /></View>
     {shown.map(g => <View key={g.name} style={s.libraryRow}><GameTile game={g} compact /><Pressable onPress={() => setSaved(old => old.includes(g.name) ? old.filter(x => x !== g.name) : [...old, g.name])} style={[s.saveButton, saved.includes(g.name) && s.savedButton]}><Text style={s.saveButtonText}>{saved.includes(g.name) ? "Added" : "Add"}</Text></Pressable></View>)}
@@ -272,15 +270,14 @@ function ProfileScreen() {
     {[
       { name: "Xbox", provider: "xbox", action: () => connect("xbox") },
       { name: "Steam", provider: "steam", action: () => connect("steam") },
-      { name: "PlayStation", provider: "playstation", action: undefined },
       { name: "Epic Games", provider: "epic", action: undefined },
-      { name: "Nintendo", provider: "nintendo", action: undefined }
+      { name: "Epic Games", provider: "epic", action: undefined }
     ].map(item => {
       const linked = connections[item.provider];
       return <View key={item.name} style={s.platformRow}>
         <View style={s.platformIcon}><Gamepad color={C.purple2} size={19} /></View>
         <View style={{ flex: 1 }}><Text style={s.platformName}>{item.name}</Text>{linked ? <Text style={s.smallMuted}>{linked.display_name || linked.provider_user_id}</Text> : null}</View>
-        {linked ? <Pressable onPress={() => Alert.alert("Disconnect account", "Remove this saved account from this device?", [{ text: "Cancel", style: "cancel" }, { text: "Disconnect", style: "destructive", onPress: () => { void removePlatformAccount(item.provider).then(() => setConnections(old => { const next = { ...old }; delete next[item.provider]; return next; })); } }])} style={s.joinSmall}><Text style={s.joinSmallText}>Disconnect</Text></Pressable> : item.action ? <Pressable onPress={item.action} style={s.joinSmall}><Text style={s.joinSmallText}>Connect</Text></Pressable> : <View style={s.notConnected}><CircleDot color={C.muted} size={12} /><Text style={s.notConnectedText}>{item.name === "PlayStation" ? "Partner access required" : "Not linked"}</Text></View>}
+        {linked ? <Pressable onPress={() => Alert.alert("Disconnect account", "Remove this saved account from this device?", [{ text: "Cancel", style: "cancel" }, { text: "Disconnect", style: "destructive", onPress: () => { void removePlatformAccount(item.provider).then(() => setConnections(old => { const next = { ...old }; delete next[item.provider]; return next; })); } }])} style={s.joinSmall}><Text style={s.joinSmallText}>Disconnect</Text></Pressable> : item.action ? <Pressable onPress={item.action} style={s.joinSmall}><Text style={s.joinSmallText}>Connect</Text></Pressable> : <View style={s.notConnected}><CircleDot color={C.muted} size={12} /><Text style={s.notConnectedText}>Not linked</Text></View>}
       </View>;
     })}
     <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Connected account tokens are kept in encrypted storage on this device. Respawn never stores your gaming passwords. Official sign-in flows must be completed before an account can be added here.</Text></View>
