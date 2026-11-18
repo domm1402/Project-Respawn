@@ -238,7 +238,7 @@ function MessagesScreen() {
 }
 
 function ProfileScreen() {
-  const { signOut } = useAuth();
+  const { signOut, isGuest } = useAuth();
   const [following, setFollowing] = useState(false);
   const [connections, setConnections] = useState<Record<string, any>>({});
   const [playerProfile, setPlayerProfile] = useState<any>(null);
@@ -264,7 +264,7 @@ function ProfileScreen() {
     }
   }
   return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-    <Text style={s.eyebrow}>YOUR PLAYER CARD</Text><Text style={s.heading}>Profile</Text>
+    <Text style={s.eyebrow}>YOUR PLAYER CARD</Text><Text style={s.heading}>Profile</Text>{isGuest ? <Text style={s.smallMuted}>Guest mode · This device</Text> : null}
     <View style={s.profileBanner}><View style={s.bannerOrb} /><Text style={s.bannerLabel}>RESPAWN PLAYER</Text><Avatar label={playerProfile?.display_name || "P"} color={C.purple2} size={76} /><Text style={s.profileName}>{playerProfile?.display_name || "Player One"}</Text><Text style={s.handle}>@{playerProfile?.username || "playerone"} · Level 1</Text><Text style={s.profileBio}>{playerProfile?.bio || "Here for good games and better teammates."}</Text><Pressable onPress={() => Alert.alert("Profile editing", "Profile editing controls are the next profile milestone.")} style={s.primaryButton}><Text style={s.primaryButtonText}>Edit profile</Text><Settings color="#fff" size={16} /></Pressable></View>
     <View style={s.profileStats}><View><Text style={s.statValue}>02</Text><Text style={s.statLabel}>GAMES</Text></View><View><Text style={s.statValue}>00</Text><Text style={s.statLabel}>FRIENDS</Text></View><View><Text style={s.statValue}>00</Text><Text style={s.statLabel}>GUILDS</Text></View></View>
     <SectionTitle title="Connected platforms" />
@@ -281,7 +281,7 @@ function ProfileScreen() {
       </View>;
     })}
     <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Connected account tokens are kept in encrypted storage on this device. Respawn never stores your gaming passwords. Official sign-in flows must be completed before an account can be added here.</Text></View>
-    {backendConfigured ? <Pressable onPress={() => void signOut()} style={s.secondarySignOut}><Text style={s.secondarySignOutText}>Sign out</Text></Pressable> : null}
+    <Pressable onPress={() => void signOut()} style={s.secondarySignOut}><Text style={s.secondarySignOutText}>{isGuest ? "Exit guest mode" : "Sign out"}</Text></Pressable>
   </ScrollView>;
 }
 
