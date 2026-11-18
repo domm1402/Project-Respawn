@@ -9,10 +9,10 @@
 
 ## Target architecture
 - **Mobile:** Expo / React Native client.
-- **Identity and database:** Supabase Auth + PostgreSQL with Row Level Security.
-- **Realtime:** Supabase Realtime for presence and chat prototypes; evaluate scale and message retention before production.
+- **Identity and database:** Respawn Worker API + Cloudflare D1 database with server-side authorization.
+- **Realtime:** Worker-backed polling initially; add authenticated realtime transport when the messaging service is ready; evaluate scale and message retention before production.
 - **Media:** private object storage buckets with signed URLs, upload limits and moderation.
-- **Server-side integrations:** Supabase Edge Functions or a small trusted API for OAuth exchanges, provider API calls, webhook validation and notification fan-out.
+- **Server-side integrations:** Respawn Worker API for OAuth exchanges, provider API calls, webhook validation and notification fan-out.
 - **Builds:** GitHub Actions for type checks; EAS Build for Android/iOS binaries when configured with the required Expo account and credentials.
 
 ## Security boundaries
