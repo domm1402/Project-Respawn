@@ -3,6 +3,7 @@ import AuthGate from "./src/AuthGate";
 import { connectSteam, connectXbox, listPlatformConnections } from "./src/api";
 import { backendConfigured } from "./src/backend";
 import LiveMessagingScreen from "./src/LiveMessagingScreen";
+import LiveDiscoverScreen from "./src/LiveDiscoverScreen";
 import {
   SafeAreaView, View, Text, StyleSheet, ScrollView, Pressable,
   TextInput, StatusBar, Image, Platform, Linking, Alert
@@ -219,7 +220,7 @@ function RespawnApp() {
     { name: "Messages" as Tab, Icon: MessageCircle },
     { name: "Profile" as Tab, Icon: UserRound }
   ];
-  const screen = tab === "Home" ? <HomeScreen setTab={setTab} /> : tab === "Discover" ? <DiscoverScreen /> : tab === "Games" ? <GamesScreen /> : tab === "Messages" ? <LiveMessagingScreen /> : <ProfileScreen />;
+  const screen = tab === "Home" ? <HomeScreen setTab={setTab} /> : tab === "Discover" ? (backendConfigured ? <LiveDiscoverScreen /> : <DiscoverScreen />) : tab === "Games" ? <GamesScreen /> : tab === "Messages" ? <LiveMessagingScreen /> : <ProfileScreen />;
   return <SafeAreaView style={s.safe}>
     <StatusBar barStyle="light-content" backgroundColor={C.bg} />
     <View style={s.topBar}><View style={s.brand}><View style={s.brandMark}><Zap color="#fff" size={18} fill="#fff" /></View><Text style={s.brandText}>RESPAWN</Text><Text style={s.betaTag}>BETA</Text></View><Pressable onPress={() => setShowNotifications(v => !v)} style={s.topAvatar}><Bell color={C.text} size={19} /><View style={s.notificationDot} /></Pressable></View>
