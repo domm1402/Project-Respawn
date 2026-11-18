@@ -1,12 +1,25 @@
 {
-  "expo":{
-    "name":"Respawn",
-    "slug":"project-respawn",
-    "version":"1.0.0",
-    "orientation":"portrait",
-    "userInterfaceStyle":"dark",
-    "android":{"package":"com.domm1402.respawn","adaptiveIcon":{"backgroundColor":"#090910"}},
-    "ios":{"bundleIdentifier":"com.domm1402.respawn","supportsTablet":true},
-    "plugins":["expo-secure-store"]
+  "expo": {
+    "name": "Respawn",
+    "slug": "project-respawn",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/respawn-icon.png",
+    "android": {
+      "package": "com.domm1402.respawn",
+      "icon": "./assets/respawn-icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/respawn-icon.png",
+        "backgroundColor": "#0F69E6"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.domm1402.respawn",
+      "supportsTablet": true
+    },
+    "plugins": [
+      "expo-secure-store"
+    ]
   }
 }
