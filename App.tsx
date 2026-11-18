@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import AuthGate from "./src/AuthGate";
+import AuthGate, { useAuth } from "./src/AuthGate";
 import { connectSteam, connectXbox, getMyProfile, listPlatformConnections } from "./src/api";
 import { backendConfigured, setAccessToken } from "./src/backend";
 import LiveMessagingScreen from "./src/LiveMessagingScreen";
@@ -275,7 +275,7 @@ function ProfileScreen() {
       </View>;
     })}
     <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Xbox and Steam use server-side identity verification. PlayStation's consumer game-library API is not generally available, so automatic PSN linking requires official partner access.</Text></View>
-    {backendConfigured ? <Pressable onPress={() => void setAccessToken(null).then(() => Alert.alert("Signed out", "Restart Respawn to return to the sign-in screen."))} style={s.secondarySignOut}><Text style={s.secondarySignOutText}>Sign out</Text></Pressable> : null}
+    {backendConfigured ? <Pressable onPress={() => void signOut()} style={s.secondarySignOut}><Text style={s.secondarySignOutText}>Sign out</Text></Pressable> : null}
   </ScrollView>;
 }
 
