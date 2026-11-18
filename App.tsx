@@ -252,10 +252,11 @@ function ProfileScreen() {
   }, []);
   async function connect(provider: "steam" | "xbox") {
     try {
-      const url = provider === "steam" ? await connectSteam() : await connectXbox();
-      await Linking.openURL(url);
+      const account = provider === "steam" ? await connectSteam() : await connectXbox();
+      setConnections(old => ({ ...old, [provider]: { provider, provider_user_id: account.accountId, display_name: account.displayName || (provider === "steam" ? "Steam " + account.accountId : "Xbox player") } }));
+      Alert.alert("Account connected", (account.displayName || provider) + " is now saved securely on this device.");
     } catch (error) {
-      Alert.alert("Connection unavailable", error instanceof Error ? error.message : "Could not start account connection.");
+      Alert.alert("Connection unavailable", error instanceof Error ? error.message : "Could not complete account connection.");
     }
   }
   return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
