@@ -5,5 +5,5 @@ compatibility_date = "2026-11-18"
 [[d1_databases]]
 binding = "DB"
 database_name = "respawn-db"
-database_id = "REPLACE_WITH_DATABASE_ID"
+database_id = "162c843f-8dff-4967-b063-f4ee7e25a776"
 migrations_dir = "migrations"
