@@ -5,8 +5,6 @@ import { backendConfigured } from "./src/backend";
 import LiveMessagingScreen from "./src/LiveMessagingScreen";
 import LiveDiscoverScreen from "./src/LiveDiscoverScreen";
 import { registerGlobals } from "@livekit/react-native";
-registerGlobals();
-
 import {
   SafeAreaView, View, Text, StyleSheet, ScrollView, Pressable,
   TextInput, StatusBar, Image, Platform, Linking, Alert
@@ -17,6 +15,8 @@ import {
   Shield, Clock3, Star, SlidersHorizontal, Play, Send, Settings,
   Link2, CircleDot, Hash, Headphones, Gamepad, Bookmark, Sparkles
 } from "lucide-react-native";
+
+registerGlobals();
 
 type Tab = "Home" | "Discover" | "Games" | "Messages" | "Profile";
 
