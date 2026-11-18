@@ -6,7 +6,7 @@ import LiveMessagingScreen from "./src/LiveMessagingScreen";
 import LiveDiscoverScreen from "./src/LiveDiscoverScreen";
 import { registerGlobals } from "@livekit/react-native";
 import {
-  SafeAreaView, View, Text, StyleSheet, ScrollView, Pressable,
+  SafeAreaView, View, Text, StyleSheet, ScrollView, Pressable, AppState,
   TextInput, StatusBar, Image, Platform, Linking, Alert
 } from "react-native";
 import {
@@ -180,7 +180,13 @@ function ProfileScreen() {
   const [following, setFollowing] = useState(false);
   const [connections, setConnections] = useState<Record<string, any>>({});
   useEffect(() => {
-    if (backendConfigured) listPlatformConnections().then(rows => setConnections(Object.fromEntries(rows.map(row => [row.provider, row])))).catch(() => {});
+    const refreshConnections = () => {
+      if (backendConfigured) listPlatformConnections().then(rows => setConnections(Object.fromEntries(rows.map(row => [row.provider, row])))).catch(() => {});
+    };
+    refreshConnections();
+    const appState = AppState.addEventListener("change", state => { if (state === "active") refreshConnections(); });
+    const deepLink = Linking.addEventListener("url", refreshConnections);
+    return () => { appState.remove(); deepLink.remove(); };
   }, []);
   async function connect(provider: "steam" | "xbox") {
     try {
