@@ -36,7 +36,16 @@ export default {async fetch(r:Request,e:Env){
   if(table&&tables[table]){
    const spec=tables[table];
    if(r.method==="GET"){const rows=await e.DB.prepare("SELECT * FROM "+table+" ORDER BY created_at DESC LIMIT 100").all();return reply(rows.results)}
-   if(r.method==="POST"){const b:any=await r.json(),row:any={id:uid(),[spec.owner]:me,created_at:now()};for(const c of spec.cols)if(b[c]!==undefined)row[c]=b[c];if(table==="communities"&&!row.slug)row.slug=String(row.name||"community").toLowerCase().replace(/[^a-z0-9]+/g,"-")+"-"+row.id.slice(0,6);if(table==="direct_messages"){row.conversation_id=b.conversation_id;row.author_id=me}
+   if(r.method==="POST"){const b:any=await r.json();
+    if(["profile_games","community_members","guild_members","event_attendees"].includes(table)){
+      const key=table==="profile_games"?"profile_id":table==="community_members"||table==="guild_members"?"profile_id":"profile_id";
+      const other=table==="profile_games"?"game_id":table==="community_members"?"community_id":table==="guild_members"?"guild_id":"event_id";
+      const extra=table==="event_attendees"?(b.status||"going"):"member";
+      if(table==="event_attendees")await e.DB.prepare("INSERT OR REPLACE INTO "+table+"(profile_id,event_id,status) VALUES(?,?,?)").bind(me,b[other],extra).run();
+      else await e.DB.prepare("INSERT OR IGNORE INTO "+table+"(profile_id,"+other+(table==="profile_games"?",platform":",role")+") VALUES(?,?,?)").bind(me,b[other],table==="profile_games"?(b.platform||"manual"):"member").run();
+      return reply({ok:true},201);
+    }
+    const row:any={id:uid(),[spec.owner]:me,created_at:now()};for(const c of spec.cols)if(b[c]!==undefined)row[c]=b[c];if(table==="communities"&&!row.slug)row.slug=String(row.name||"community").toLowerCase().replace(/[^a-z0-9]+/g,"-")+"-"+row.id.slice(0,6);if(table==="direct_messages"){row.conversation_id=b.conversation_id;row.author_id=me}
     const cols=Object.keys(row);await e.DB.prepare("INSERT INTO "+table+"("+cols.join(",")+") VALUES("+cols.map(()=>"?").join(",")+")").bind(...cols.map(c=>row[c])).run();return reply(row,201)}
   }
   if(p==="/api/voice-token")return reply({error:"LiveKit token service is not configured on the Respawn server."},503);
