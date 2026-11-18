@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import AuthGate from "./src/AuthGate";
 import {
   SafeAreaView, View, Text, StyleSheet, ScrollView, Pressable,
   TextInput, StatusBar, Image, Platform
@@ -180,7 +181,7 @@ function ProfileScreen() {
   </ScrollView>;
 }
 
-export default function App() {
+function RespawnApp() {
   const [tab, setTab] = useState<Tab>("Home");
   const [showNotifications, setShowNotifications] = useState(false);
   const nav = [
@@ -300,3 +301,6 @@ const s = StyleSheet.create({
   navActiveDot: { position: "absolute", bottom: 3, width: 14, height: 2, borderRadius: 2, backgroundColor: C.purple2 },
   notificationPanel: { marginHorizontal: 15, marginTop: 8, backgroundColor: C.panel2, borderColor: C.line, borderWidth: 1, borderRadius: 13, padding: 14, zIndex: 3 }
 });
+
+
+export default function App() {\n  return <AuthGate><RespawnApp /></AuthGate>;\n}\n
