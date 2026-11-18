@@ -1,0 +1,9 @@
+name = "respawn-api"
+main = "src/index.ts"
+compatibility_date = "2026-11-18"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "respawn-db"
+database_id = "REPLACE_WITH_DATABASE_ID"
+migrations_dir = "migrations"
