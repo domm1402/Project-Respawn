@@ -2,8 +2,9 @@ import React, { useMemo, useState } from "react";
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { Cpu, Fan, CircuitBoard, HardDrive, MemoryStick, Monitor, Zap, Box, Check, ChevronDown, ChevronUp, RotateCcw, Save, Sparkles, ShieldCheck, Gauge, CircleDollarSign } from "lucide-react-native";
 import Svg, { Circle, Defs, LinearGradient, Polygon, Rect, Path, Line, Stop } from "react-native-svg";
+import { theme } from "./theme";
 
-const C={bg:"#080B14",panel:"#111827",panel2:"#182238",line:"#293650",text:"#F4F7FF",muted:"#91A0B9",purple:"#8667FF",cyan:"#57D8E8",green:"#55D6A2",orange:"#FFB66E",red:"#FF7D8B"};
+const C=theme.colors;
 type Part={id:string;name:string;price:number;watts:number;tag?:string;detail:string;socket?:string;image:string};
 const gpu:Part[]=[
 {id:"5090",name:"GeForce RTX 5090 32GB",price:2899,watts:575,tag:"ULTIMATE 4K",detail:"NVIDIA · 32GB GDDR7",image:"https://images.unsplash.com/photo-1591488320449-011701bb6704?w=600"},
