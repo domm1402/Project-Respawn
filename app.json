@@ -10,14 +10,33 @@
       "package": "com.domm1402.respawn",
       "adaptiveIcon": {
         "backgroundColor": "#0B0B12"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "ios": {
       "bundleIdentifier": "com.domm1402.respawn",
       "supportsTablet": true
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "@livekit/react-native-expo-plugin",
+        {
+          "android": {
+            "audioType": "communication"
+          }
+        }
+      ],
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          "microphonePermission": "Respawn uses your microphone for gaming voice channels.",
+          "cameraPermission": "Respawn uses your camera only when you choose video."
+        }
+      ]
     ]
   }
 }
