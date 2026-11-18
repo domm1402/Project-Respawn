@@ -29,16 +29,16 @@ export default function VoiceRoomScreen({ onBack, initialRoomId = "" }: { onBack
 
   useEffect(() => {
     if (!token) return;
-    void AudioSession.startAudioSession();
     return () => { void AudioSession.stopAudioSession(); };
   }, [token]);
 
   async function join() {
     setBusy(true); setError("");
     try {
+      await AudioSession.startAudioSession();
       const result = await requestVoiceToken(roomId.trim());
       setServerUrl(result.url); setToken(result.token);
-    } catch (e) { setError(e instanceof Error ? e.message : "Could not join voice room."); }
+    } catch (e) { await AudioSession.stopAudioSession(); setError(e instanceof Error ? e.message : "Could not join voice room."); }
     finally { setBusy(false); }
   }
 
