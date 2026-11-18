@@ -131,7 +131,10 @@ function HomeScreen({ setTab }: { setTab: (tab: Tab) => void }) {
 function DiscoverScreen() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All");
-  const [joined, setJoined] = useState<string[]>([]);\n  const [joinedGuilds, setJoinedGuilds] = useState<string[]>([]);\n  const [rsvps, setRsvps] = useState<string[]>([]);\n  const [likedPosts, setLikedPosts] = useState<string[]>([]);
+  const [joined, setJoined] = useState<string[]>([]);
+  const [joinedGuilds, setJoinedGuilds] = useState<string[]>([]);
+  const [rsvps, setRsvps] = useState<string[]>([]);
+  const [likedPosts, setLikedPosts] = useState<string[]>([]);
   const filteredGames = games.filter(g => g.name.toLowerCase().includes(query.toLowerCase()));
   const filters = ["All", "Games", "Players", "Communities", "Guilds", "Events", "Feed"];
   return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
