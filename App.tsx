@@ -4,6 +4,9 @@ import { connectSteam, connectXbox, listPlatformConnections } from "./src/api";
 import { backendConfigured } from "./src/backend";
 import LiveMessagingScreen from "./src/LiveMessagingScreen";
 import LiveDiscoverScreen from "./src/LiveDiscoverScreen";
+import { registerGlobals } from "@livekit/react-native";
+registerGlobals();
+
 import {
   SafeAreaView, View, Text, StyleSheet, ScrollView, Pressable,
   TextInput, StatusBar, Image, Platform, Linking, Alert
