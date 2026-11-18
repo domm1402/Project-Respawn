@@ -25,7 +25,8 @@
     "@config-plugins/react-native-webrtc": "^13.0.0",
     "livekit-client": "^2.15.6",
     "expo-auth-session": "~7.0.8",
-    "expo-web-browser": "~15.0.9"
+    "expo-web-browser": "~15.0.9",
+    "expo-crypto": "~15.0.7"
   },
   "devDependencies": {
     "@types/react": "~19.1.10",
