@@ -33,6 +33,24 @@ const communities = [
   { name: "The Ranked Hub", tag: "COMPETITIVE", members: "6.1k", game: "Multi-game", color: "#397AB8" }
 ];
 
+const guilds = [
+  { name: "Respawn Raiders", tag: "CASUAL · ALL PLATFORMS", members: "2.4k", game: "Multi-game", color: "#8B5CF6" },
+  { name: "The Endgame", tag: "COMPETITIVE · EU", members: "860", game: "FPS games", color: "#397AB8" },
+  { name: "Block Party", tag: "CREATIVE · FRIENDLY", members: "1.2k", game: "Minecraft", color: "#438B58" }
+];
+
+const events = [
+  { name: "Friday Night Squad-Up", date: "FRI · 19:00", game: "Fortnite", host: "Respawn Raiders", spots: "8 places" },
+  { name: "Community Build Night", date: "SAT · 16:00", game: "Minecraft", host: "Block Party", spots: "Open invite" },
+  { name: "Ranked Climb Session", date: "SUN · 18:30", game: "Rocket League", host: "The Endgame", spots: "4 places" }
+];
+
+const feedPosts = [
+  { id: "p1", author: "Nova", handle: "@nova.exe", text: "Finally hit the next rank. Who's up for a few games tonight?", game: "Fortnite", likes: 24, color: "#A78BFA" },
+  { id: "p2", author: "Kai", handle: "@kaiplays", text: "Started a new survival world. Looking for builders to join the project.", game: "Minecraft", likes: 18, color: "#55B98A" },
+  { id: "p3", author: "Milo", handle: "@miloFPS", text: "What game has the best soundtrack? Drop your picks below.", game: "Gaming discussion", likes: 31, color: "#E69A61" }
+];
+
 const people = [
   { name: "Nova", handle: "@nova.exe", games: "Fortnite · Rocket League", status: "Looking for players", color: "#A78BFA" },
   { name: "Kai", handle: "@kaiplays", games: "Minecraft · GTA V", status: "Online", color: "#55B98A" },
@@ -105,9 +123,9 @@ function HomeScreen({ setTab }: { setTab: (tab: Tab) => void }) {
 function DiscoverScreen() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All");
-  const [joined, setJoined] = useState<string[]>([]);
+  const [joined, setJoined] = useState<string[]>([]);\n  const [joinedGuilds, setJoinedGuilds] = useState<string[]>([]);\n  const [rsvps, setRsvps] = useState<string[]>([]);\n  const [likedPosts, setLikedPosts] = useState<string[]>([]);
   const filteredGames = games.filter(g => g.name.toLowerCase().includes(query.toLowerCase()));
-  const filters = ["All", "Games", "Players", "Communities"];
+  const filters = ["All", "Games", "Players", "Communities", "Guilds", "Events", "Feed"];
   return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
     <Text style={s.eyebrow}>FIND YOUR NEXT PARTY</Text><Text style={s.heading}>Discover</Text>
     <View style={s.searchBox}><Search color={C.muted} size={19} /><TextInput value={query} onChangeText={setQuery} placeholder="Search games, players, communities..." placeholderTextColor={C.muted} style={s.searchInput} /></View>
@@ -115,6 +133,9 @@ function DiscoverScreen() {
     {(filter === "All" || filter === "Games") && <><SectionTitle title="Popular games" action="View library" /><View style={s.grid}>{filteredGames.slice(0, 4).map(g => <Pressable key={g.name} onPress={() => setQuery(g.name)} style={s.discoverGame}><View style={[s.discoverArt, { backgroundColor: g.color }]}><Text style={s.discoverMark}>{g.mark}</Text></View><Text style={s.cardTitle} numberOfLines={1}>{g.name}</Text><Text style={s.smallMuted}>{g.genre}</Text></Pressable>)}</View></>}
     {(filter === "All" || filter === "Communities") && <><SectionTitle title="Communities" action="Browse all" />{communities.filter(c => (c.name + c.game).toLowerCase().includes(query.toLowerCase())).map(c => <View key={c.name} style={s.communityCard}><View style={[s.communityIcon, { backgroundColor: c.color + "25" }]}><Shield color={c.color} size={22} /></View><View style={{ flex: 1 }}><Text style={s.cardTitle}>{c.name}</Text><Text style={s.smallMuted}>{c.tag} · {c.members} members</Text></View><Pressable onPress={() => setJoined(old => old.includes(c.name) ? old.filter(x => x !== c.name) : [...old, c.name])} style={[s.joinSmall, joined.includes(c.name) && s.joinedButton]}><Text style={s.joinSmallText}>{joined.includes(c.name) ? "Joined" : "Join"}</Text></Pressable></View>)}</>}
     {(filter === "All" || filter === "Players") && <><SectionTitle title="Players looking for teammates" />{people.filter(p => (p.name + p.games).toLowerCase().includes(query.toLowerCase())).map(p => <View key={p.handle} style={s.personCard}><Avatar label={p.name} color={p.color} size={46} /><View style={{ flex: 1 }}><Text style={s.personName}>{p.name} <Text style={s.handle}>{p.handle}</Text></Text><Text style={s.smallMuted}>{p.games}</Text><Text style={s.lfgText}>{p.status}</Text></View><Pressable style={s.iconButtonSmall}><Plus color={C.text} size={18} /></Pressable></View>)}</>}
+    {(filter === "All" || filter === "Guilds") && <><SectionTitle title="Guilds recruiting" action="Explore guilds" />{guilds.filter(g => (g.name + g.game + g.tag).toLowerCase().includes(query.toLowerCase())).map(g => <View key={g.name} style={s.communityCard}><View style={[s.communityIcon, { backgroundColor: g.color + "25" }]}><Shield color={g.color} size={22} /></View><View style={{ flex: 1 }}><Text style={s.cardTitle}>{g.name}</Text><Text style={s.smallMuted}>{g.tag} · {g.members} members</Text><Text style={s.smallMuted}>{g.game}</Text></View><Pressable onPress={() => setJoinedGuilds(old => old.includes(g.name) ? old.filter(x => x !== g.name) : [...old, g.name])} style={[s.joinSmall, joinedGuilds.includes(g.name) && s.joinedButton]}><Text style={s.joinSmallText}>{joinedGuilds.includes(g.name) ? "Joined" : "Join"}</Text></Pressable></View>)}</>}
+    {(filter === "All" || filter === "Events") && <><SectionTitle title="Upcoming gaming events" />{events.filter(e => (e.name + e.game + e.host).toLowerCase().includes(query.toLowerCase())).map(e => <View key={e.name} style={s.communityCard}><View style={[s.communityIcon, { backgroundColor: "#8B5CF625" }]}><Clock3 color={C.purple2} size={22} /></View><View style={{ flex: 1 }}><Text style={s.cardTitle}>{e.name}</Text><Text style={s.smallMuted}>{e.date} · {e.game}</Text><Text style={s.smallMuted}>Hosted by {e.host} · {e.spots}</Text></View><Pressable onPress={() => setRsvps(old => old.includes(e.name) ? old.filter(x => x !== e.name) : [...old, e.name])} style={[s.joinSmall, rsvps.includes(e.name) && s.joinedButton]}><Text style={s.joinSmallText}>{rsvps.includes(e.name) ? "Going" : "Join"}</Text></Pressable></View>)}</>}
+    {(filter === "All" || filter === "Feed") && <><SectionTitle title="Community feed" />{feedPosts.filter(p => (p.author + p.text + p.game).toLowerCase().includes(query.toLowerCase())).map(p => <View key={p.id} style={{ backgroundColor: C.panel, borderColor: C.line, borderWidth: 1, borderRadius: 15, padding: 13, gap: 9 }}><View style={{ flexDirection: "row", alignItems: "center", gap: 9 }}><Avatar label={p.author} color={p.color} size={36} /><View style={{ flex: 1 }}><Text style={s.personName}>{p.author} <Text style={s.handle}>{p.handle}</Text></Text><Text style={s.smallMuted}>{p.game}</Text></View><Text style={s.smallMuted}>POST</Text></View><Text style={{ color: C.text, fontSize: 12, lineHeight: 18 }}>{p.text}</Text><View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}><Text style={s.smallMuted}>{p.likes + (likedPosts.includes(p.id) ? 1 : 0)} likes</Text><Pressable onPress={() => setLikedPosts(old => old.includes(p.id) ? old.filter(x => x !== p.id) : [...old, p.id])} style={s.filterChip}><Text style={[s.filterText, likedPosts.includes(p.id) && s.filterTextActive]}>{likedPosts.includes(p.id) ? "♥ Liked" : "♡ Like"}</Text></Pressable></View></View>)}</>}
     <View style={s.infoNote}><Sparkles color={C.purple2} size={17} /><Text style={s.infoText}>Discover is running on sample content while the community backend is being built.</Text></View>
   </ScrollView>;
 }
