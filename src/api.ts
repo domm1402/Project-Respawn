@@ -204,3 +204,18 @@ export async function listPlatformConnections() {
   if (error) throw error;
   return data;
 }
+
+
+export async function listDirectConversations() {
+  const client = db();
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) throw new Error("Sign in first.");
+  const { data: memberships, error: memberError } = await client.from("direct_conversation_members")
+    .select("conversation_id").eq("profile_id", user.id);
+  if (memberError) throw memberError;
+  const ids = (memberships ?? []).map(row => row.conversation_id);
+  if (!ids.length) return [];
+  const { data, error } = await client.from("direct_conversations").select("*").in("id", ids).order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
