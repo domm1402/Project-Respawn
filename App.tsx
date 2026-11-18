@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AuthGate from "./src/AuthGate";
-import { connectSteam, connectXbox, listPlatformConnections } from "./src/api";
-import { backendConfigured } from "./src/backend";
+import { connectSteam, connectXbox, getMyProfile, listPlatformConnections } from "./src/api";
+import { backendConfigured, supabase } from "./src/backend";
 import LiveMessagingScreen from "./src/LiveMessagingScreen";
 import LiveDiscoverScreen from "./src/LiveDiscoverScreen";
 import { registerGlobals } from "@livekit/react-native";
@@ -182,11 +182,13 @@ function MessagesScreen() {
 function ProfileScreen() {
   const [following, setFollowing] = useState(false);
   const [connections, setConnections] = useState<Record<string, any>>({});
+  const [playerProfile, setPlayerProfile] = useState<any>(null);
   useEffect(() => {
     const refreshConnections = () => {
       if (backendConfigured) listPlatformConnections().then(rows => setConnections(Object.fromEntries(rows.map(row => [row.provider, row])))).catch(() => {});
     };
     refreshConnections();
+    if (backendConfigured) getMyProfile().then(setPlayerProfile).catch(() => {});
     const appState = AppState.addEventListener("change", state => { if (state === "active") refreshConnections(); });
     const deepLink = Linking.addEventListener("url", refreshConnections);
     return () => { appState.remove(); deepLink.remove(); };
@@ -201,7 +203,7 @@ function ProfileScreen() {
   }
   return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
     <Text style={s.eyebrow}>YOUR PLAYER CARD</Text><Text style={s.heading}>Profile</Text>
-    <View style={s.profileBanner}><View style={s.bannerOrb} /><Text style={s.bannerLabel}>RESPAWN PLAYER</Text><Avatar label="P" color={C.purple2} size={76} /><Text style={s.profileName}>Player One</Text><Text style={s.handle}>@playerone · Level 1</Text><Text style={s.profileBio}>Here for good games and better teammates.</Text><Pressable onPress={() => setFollowing(v => !v)} style={s.primaryButton}><Text style={s.primaryButtonText}>{following ? "Following yourself" : "Edit profile"}</Text><Settings color="#fff" size={16} /></Pressable></View>
+    <View style={s.profileBanner}><View style={s.bannerOrb} /><Text style={s.bannerLabel}>RESPAWN PLAYER</Text><Avatar label={playerProfile?.display_name || "P"} color={C.purple2} size={76} /><Text style={s.profileName}>{playerProfile?.display_name || "Player One"}</Text><Text style={s.handle}>@{playerProfile?.username || "playerone"} · Level 1</Text><Text style={s.profileBio}>{playerProfile?.bio || "Here for good games and better teammates."}</Text><Pressable onPress={() => Alert.alert("Profile editing", "Profile editing controls are the next profile milestone.")} style={s.primaryButton}><Text style={s.primaryButtonText}>Edit profile</Text><Settings color="#fff" size={16} /></Pressable></View>
     <View style={s.profileStats}><View><Text style={s.statValue}>02</Text><Text style={s.statLabel}>GAMES</Text></View><View><Text style={s.statValue}>00</Text><Text style={s.statLabel}>FRIENDS</Text></View><View><Text style={s.statValue}>00</Text><Text style={s.statLabel}>GUILDS</Text></View></View>
     <SectionTitle title="Connected platforms" />
     {[
@@ -219,6 +221,7 @@ function ProfileScreen() {
       </View>;
     })}
     <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Xbox and Steam use server-side identity verification. PlayStation's consumer game-library API is not generally available, so automatic PSN linking requires official partner access.</Text></View>
+    {supabase ? <Pressable onPress={() => supabase.auth.signOut()} style={s.secondarySignOut}><Text style={s.secondarySignOutText}>Sign out</Text></Pressable> : null}
   </ScrollView>;
 }
 
@@ -335,6 +338,8 @@ const s = StyleSheet.create({
   platformName: { color: C.text, fontSize: 11, fontWeight: "800", flex: 1 },
   notConnected: { flexDirection: "row", alignItems: "center", gap: 5 },
   notConnectedText: { color: C.muted, fontSize: 9 },
+  secondarySignOut: { alignSelf: "center", padding: 12 },
+  secondarySignOutText: { color: "#FF9D8C", fontSize: 11, fontWeight: "800" },
   bottomNav: { height: 67, backgroundColor: "#101019", borderTopWidth: 1, borderTopColor: C.line, flexDirection: "row", justifyContent: "space-around", alignItems: "center", paddingBottom: Platform.OS === "ios" ? 5 : 2 },
   navItem: { flex: 1, alignItems: "center", justifyContent: "center", gap: 4, height: "100%" },
   navLabel: { color: C.muted, fontSize: 8, fontWeight: "700" },
