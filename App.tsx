@@ -239,7 +239,7 @@ function ProfileScreen() {
   const [playerProfile, setPlayerProfile] = useState<any>(null);
   useEffect(() => {
     const refreshConnections = () => {
-      if (backendConfigured) listPlatformConnections().then(rows => setConnections(Object.fromEntries(rows.map(row => [row.provider, row])))).catch(() => {});
+      if (backendConfigured) listPlatformConnections().then(rows => setConnections(Object.fromEntries(rows.map((row: any) => [row.provider, row])))).catch(() => {});
     };
     refreshConnections();
     if (backendConfigured) getMyProfile().then(setPlayerProfile).catch(() => {});
