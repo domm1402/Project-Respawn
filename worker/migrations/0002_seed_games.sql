@@ -1,0 +1,16 @@
+INSERT OR IGNORE INTO games(id,name,genre,created_at) VALUES
+('fortnite','Fortnite','Battle Royale','2026-11-18T00:00:00.000Z'),
+('minecraft','Minecraft','Sandbox','2026-11-18T00:00:00.000Z'),
+('call-of-duty','Call of Duty','FPS','2026-11-18T00:00:00.000Z'),
+('rocket-league','Rocket League','Sports','2026-11-18T00:00:00.000Z'),
+('grand-theft-auto-v','Grand Theft Auto V','Open World','2026-11-18T00:00:00.000Z'),
+('apex-legends','Apex Legends','Battle Royale','2026-11-18T00:00:00.000Z'),
+('roblox','Roblox','Sandbox','2026-11-18T00:00:00.000Z'),
+('valorant','VALORANT','Tactical FPS','2026-11-18T00:00:00.000Z'),
+('overwatch-2','Overwatch 2','Hero Shooter','2026-11-18T00:00:00.000Z'),
+('fall-guys','Fall Guys','Party','2026-11-18T00:00:00.000Z'),
+('among-us','Among Us','Party','2026-11-18T00:00:00.000Z'),
+('ea-sports-fc','EA SPORTS FC','Sports','2026-11-18T00:00:00.000Z'),
+('destiny-2','Destiny 2','FPS / MMO','2026-11-18T00:00:00.000Z'),
+('the-finals','THE FINALS','FPS','2026-11-18T00:00:00.000Z'),
+('gta-online','GTA Online','Open World','2026-11-18T00:00:00.000Z');
