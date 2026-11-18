@@ -219,3 +219,30 @@ export async function listDirectConversations() {
   if (error) throw error;
   return data;
 }
+
+
+export async function listGuilds() {
+  const { data, error } = await db().from("guilds").select("*").order("created_at", { ascending: false }).limit(100);
+  if (error) throw error;
+  return data;
+}
+
+export async function joinGuild(guildId: string) {
+  const client = db();
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) throw new Error("Sign in first.");
+  const { error } = await client.from("guild_members").insert({ guild_id: guildId, profile_id: user.id, role: "member" });
+  if (error) throw error;
+}
+
+export async function listEvents() {
+  const { data, error } = await db().from("events").select("*").gte("starts_at", new Date().toISOString()).order("starts_at").limit(100);
+  if (error) throw error;
+  return data;
+}
+
+export async function listCommunities() {
+  const { data, error } = await db().from("communities").select("*").order("created_at", { ascending: false }).limit(100);
+  if (error) throw error;
+  return data;
+}
