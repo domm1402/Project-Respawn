@@ -3,7 +3,7 @@
 The repository now contains the Supabase client, email/password authentication gate, data-access functions, realtime channel subscription helper and SQL schema. The app remains usable in demo mode until you configure a backend.
 
 ## 1. Create Supabase
-Create a free Supabase project. This repository contains a complete initial migration plus follow-up migrations. Run `supabase link --project-ref YOUR_PROJECT_REF` and `supabase db push` to create the tables, security policies and starter game catalogue. Copy the Project URL and anon/public key from Project Settings → API.
+Create a free Supabase project. This repository contains a complete initial migration plus follow-up migrations. Run `supabase link --project-ref YOUR_PROJECT_REF` and `supabase db push` to create the tables, security policies and starter game catalogue. If you are using the Supabase dashboard only, run the SQL files in the SQL Editor in this exact order: `202611180000_initial_schema.sql`, `202611180001_live_social.sql`, `202611180002_oauth_state.sql`, `202611180003_auth_profile_trigger.sql`, then `202611180004_seed_game_catalogue.sql`. Copy the Project URL and anon/public key from Project Settings → API.
 
 ## 2. Configure the mobile app
 Copy `.env.example` to `.env` and fill in:
