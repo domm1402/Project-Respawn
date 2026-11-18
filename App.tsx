@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AuthGate, { useAuth } from "./src/AuthGate";
-import { connectSteam, connectXbox, getMyProfile, listPlatformConnections } from "./src/api";
+import { connectSteam, connectXbox, getMyProfile } from "./src/api";
+import { getStoredPlatformAccounts, removePlatformAccount } from "./src/platformAccounts";
 import { backendConfigured } from "./src/backend";
 import LiveMessagingScreen from "./src/LiveMessagingScreen";
 import LiveDiscoverScreen from "./src/LiveDiscoverScreen";
@@ -239,7 +240,9 @@ function ProfileScreen() {
   const [playerProfile, setPlayerProfile] = useState<any>(null);
   useEffect(() => {
     const refreshConnections = () => {
-      if (backendConfigured) listPlatformConnections().then(rows => setConnections(Object.fromEntries(rows.map((row: any) => [row.provider, row])))).catch(() => {});
+      getStoredPlatformAccounts()
+        .then(rows => setConnections(Object.fromEntries(rows.map(row => [row.provider, row]))))
+        .catch(() => {});
     };
     refreshConnections();
     if (backendConfigured) getMyProfile().then(setPlayerProfile).catch(() => {});
@@ -271,10 +274,10 @@ function ProfileScreen() {
       return <View key={item.name} style={s.platformRow}>
         <View style={s.platformIcon}><Gamepad color={C.purple2} size={19} /></View>
         <View style={{ flex: 1 }}><Text style={s.platformName}>{item.name}</Text>{linked ? <Text style={s.smallMuted}>{linked.display_name || linked.provider_user_id}</Text> : null}</View>
-        {item.action ? <Pressable onPress={item.action} style={s.joinSmall}><Text style={s.joinSmallText}>{linked ? "Reconnect" : "Connect"}</Text></Pressable> : <View style={s.notConnected}><CircleDot color={C.muted} size={12} /><Text style={s.notConnectedText}>{item.name === "PlayStation" ? "Partner access required" : "Coming later"}</Text></View>}
+        {linked ? <Pressable onPress={() => Alert.alert("Disconnect account", "Remove this saved account from this device?", [{ text: "Cancel", style: "cancel" }, { text: "Disconnect", style: "destructive", onPress: () => { void removePlatformAccount(item.provider).then(() => setConnections(old => { const next = { ...old }; delete next[item.provider]; return next; })); } }])} style={s.joinSmall}><Text style={s.joinSmallText}>Disconnect</Text></Pressable> : item.action ? <Pressable onPress={item.action} style={s.joinSmall}><Text style={s.joinSmallText}>Connect</Text></Pressable> : <View style={s.notConnected}><CircleDot color={C.muted} size={12} /><Text style={s.notConnectedText}>{item.name === "PlayStation" ? "Partner access required" : "Not linked"}</Text></View>}
       </View>;
     })}
-    <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Xbox and Steam use server-side identity verification. PlayStation's consumer game-library API is not generally available, so automatic PSN linking requires official partner access.</Text></View>
+    <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Connected account tokens are kept in encrypted storage on this device. Respawn never stores your gaming passwords. Official sign-in flows must be completed before an account can be added here.</Text></View>
     {backendConfigured ? <Pressable onPress={() => void signOut()} style={s.secondarySignOut}><Text style={s.secondarySignOutText}>Sign out</Text></Pressable> : null}
   </ScrollView>;
 }
