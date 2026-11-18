@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { createDirectConversation, listDirectConversations, listDirectMessages, sendDirectMessage, subscribeToDirectMessages } from "./api";
+import VoiceRoomScreen from "./VoiceRoomScreen";
 
 type Conversation = { id: string; title: string | null; is_group: boolean; created_at: string };
 type Message = { id: string; author_id: string; body: string; created_at: string };
@@ -13,6 +14,7 @@ export default function LiveMessagingScreen() {
   const [participantId, setParticipantId] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const refresh = useCallback(async () => {
     try { setConversations(await listDirectConversations()); setError(""); }
     catch (e) { setError(e instanceof Error ? e.message : "Could not load conversations."); }
@@ -51,9 +53,12 @@ export default function LiveMessagingScreen() {
     finally { setBusy(false); }
   }
 
+  if (voiceOpen) return <VoiceRoomScreen onBack={() => setVoiceOpen(false)} />;
+
   return <View style={styles.root}>
     <Text style={styles.eyebrow}>LIVE DIRECT MESSAGES</Text>
     <Text style={styles.title}>Messages</Text>
+    <Pressable onPress={() => setVoiceOpen(true)} style={styles.voiceButton}><Text style={styles.voiceButtonText}>Join a voice channel</Text></Pressable>
     {!active ? <>
       <Text style={styles.sub}>Start a private conversation using the other player's Respawn profile ID.</Text>
       <View style={styles.startRow}>
@@ -101,5 +106,7 @@ const styles = StyleSheet.create({
   conversationTitle: { color: "#F5F4FF", fontSize: 16, fontWeight: "900" },
   message: { alignSelf: "flex-start", maxWidth: "88%", backgroundColor: "#191927", borderColor: "#343349", borderWidth: 1, borderRadius: 13, padding: 11 },
   body: { color: "#F5F4FF", fontSize: 12, lineHeight: 17 },
-  error: { color: "#FF9D8C", fontSize: 10 }
+  error: { color: "#FF9D8C", fontSize: 10 },
+  voiceButton: { alignSelf: "flex-start", backgroundColor: "#8B5CF625", borderColor: "#8B5CF6", borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 9 },
+  voiceButtonText: { color: "#C8B5FF", fontSize: 10, fontWeight: "900" }
 });
