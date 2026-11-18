@@ -56,6 +56,6 @@ For Xbox, register a Microsoft app that supports personal Microsoft accounts and
 
 For Steam, set the exact Steam callback URL in the OpenID configuration and use HTTPS. The Edge Function validates the OpenID response server-side and stores only the verified SteamID64.
 
-For voice, deploy a LiveKit server or use a LiveKit Cloud project. The Edge Function issues short-lived room tokens after checking room membership. **The mobile LiveKit audio client still requires native SDK integration and an EAS development build; the token service alone does not make voice audio available in the current Expo Go app.**
+For voice, deploy a LiveKit server or use a LiveKit Cloud project. The Edge Function issues short-lived room tokens after checking room membership. **The app includes a LiveKit voice-room client and microphone controls. It is not available in Expo Go because WebRTC uses native code. Run `npx expo prebuild` and build with `npx eas build --platform android --profile development` after configuring the LiveKit server secrets.**
 
 PlayStation Network linking remains blocked on official partner access. Do not use unofficial scraping or ask for a PSN password.
