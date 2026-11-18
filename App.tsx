@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from "react";
 import AuthGate from "./src/AuthGate";
+import { connectSteam, connectXbox, listPlatformConnections } from "./src/api";
+import { backendConfigured } from "./src/backend";
 import {
   SafeAreaView, View, Text, StyleSheet, ScrollView, Pressable,
-  TextInput, StatusBar, Image, Platform
+  TextInput, StatusBar, Image, Platform, Linking, Alert
 } from "react-native";
 import {
   Home, Compass, Gamepad2, MessageCircle, UserRound, Search,
@@ -171,13 +173,38 @@ function MessagesScreen() {
 
 function ProfileScreen() {
   const [following, setFollowing] = useState(false);
+  const [connections, setConnections] = useState<Record<string, any>>({});
+  useEffect(() => {
+    if (backendConfigured) listPlatformConnections().then(rows => setConnections(Object.fromEntries(rows.map(row => [row.provider, row])))).catch(() => {});
+  }, []);
+  async function connect(provider: "steam" | "xbox") {
+    try {
+      const url = provider === "steam" ? await connectSteam() : await connectXbox();
+      await Linking.openURL(url);
+    } catch (error) {
+      Alert.alert("Connection unavailable", error instanceof Error ? error.message : "Could not start account connection.");
+    }
+  }
   return <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
     <Text style={s.eyebrow}>YOUR PLAYER CARD</Text><Text style={s.heading}>Profile</Text>
     <View style={s.profileBanner}><View style={s.bannerOrb} /><Text style={s.bannerLabel}>RESPAWN PLAYER</Text><Avatar label="P" color={C.purple2} size={76} /><Text style={s.profileName}>Player One</Text><Text style={s.handle}>@playerone · Level 1</Text><Text style={s.profileBio}>Here for good games and better teammates.</Text><Pressable onPress={() => setFollowing(v => !v)} style={s.primaryButton}><Text style={s.primaryButtonText}>{following ? "Following yourself" : "Edit profile"}</Text><Settings color="#fff" size={16} /></Pressable></View>
     <View style={s.profileStats}><View><Text style={s.statValue}>02</Text><Text style={s.statLabel}>GAMES</Text></View><View><Text style={s.statValue}>00</Text><Text style={s.statLabel}>FRIENDS</Text></View><View><Text style={s.statValue}>00</Text><Text style={s.statLabel}>GUILDS</Text></View></View>
-    <SectionTitle title="Connected platforms" action="Connect" />
-    {["Xbox", "PlayStation", "Steam", "Epic Games", "Nintendo"].map((p, i) => <View key={p} style={s.platformRow}><View style={s.platformIcon}><Gamepad color={C.purple2} size={19} /></View><Text style={s.platformName}>{p}</Text><View style={s.notConnected}><CircleDot color={C.muted} size={12} /><Text style={s.notConnectedText}>Not connected</Text></View></View>)}
-    <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Your profile is currently a local preview. Account security and verified platform connections come later.</Text></View>
+    <SectionTitle title="Connected platforms" />
+    {[
+      { name: "Xbox", provider: "xbox", action: () => connect("xbox") },
+      { name: "Steam", provider: "steam", action: () => connect("steam") },
+      { name: "PlayStation", provider: "playstation", action: undefined },
+      { name: "Epic Games", provider: "epic", action: undefined },
+      { name: "Nintendo", provider: "nintendo", action: undefined }
+    ].map(item => {
+      const linked = connections[item.provider];
+      return <View key={item.name} style={s.platformRow}>
+        <View style={s.platformIcon}><Gamepad color={C.purple2} size={19} /></View>
+        <View style={{ flex: 1 }}><Text style={s.platformName}>{item.name}</Text>{linked ? <Text style={s.smallMuted}>{linked.display_name || linked.provider_user_id}</Text> : null}</View>
+        {item.action ? <Pressable onPress={item.action} style={s.joinSmall}><Text style={s.joinSmallText}>{linked ? "Reconnect" : "Connect"}</Text></Pressable> : <View style={s.notConnected}><CircleDot color={C.muted} size={12} /><Text style={s.notConnectedText}>{item.name === "PlayStation" ? "Partner access required" : "Coming later"}</Text></View>}
+      </View>;
+    })}
+    <View style={s.infoNote}><Shield color={C.purple2} size={17} /><Text style={s.infoText}>Xbox and Steam use server-side identity verification. PlayStation's consumer game-library API is not generally available, so automatic PSN linking requires official partner access.</Text></View>
   </ScrollView>;
 }
 
