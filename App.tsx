@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import AuthGate, { useAuth } from "./src/AuthGate";
 import { connectSteam, connectXbox, getMyProfile, listPlatformConnections } from "./src/api";
-import { backendConfigured, setAccessToken } from "./src/backend";
+import { backendConfigured } from "./src/backend";
 import LiveMessagingScreen from "./src/LiveMessagingScreen";
 import LiveDiscoverScreen from "./src/LiveDiscoverScreen";
 import { registerGlobals } from "@livekit/react-native";
