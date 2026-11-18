@@ -1,7 +1,7 @@
 import React,{useState} from "react";
 import {ActivityIndicator,Linking,Pressable,StyleSheet,Text,TextInput,View} from "react-native";
 import * as SecureStore from "expo-secure-store";
-import {ExternalLink,Gamepad2,Search,Tv,Youtube,Twitch,RefreshCw,Plus} from "lucide-react-native";
+import {ExternalLink,Gamepad2,Search,Tv,Youtube,Plus} from "lucide-react-native";
 
 const C={bg:"#090910",panel:"#12121D",panel2:"#191927",line:"#29283A",text:"#F5F3FF",muted:"#9290A8",purple:"#8B5CF6",lav:"#B9A0FF",green:"#4BD49A"};
 const STEAM_KEY="respawn_steam_web_api_key_v1";
@@ -89,7 +89,7 @@ export function WatchScreen(){
   <Pressable onPress={search} disabled={busy} style={s.primary}>{busy?<ActivityIndicator color="#fff"/>:<><Search color="#fff" size={16}/><Text style={s.primaryText}>Search connected feeds</Text></>}</Pressable>
   <View style={s.quickRow}><Pressable onPress={()=>openSearch("Twitch")} style={s.quick}><Text style={s.quickText}>Browse Twitch search ↗</Text></Pressable><Pressable onPress={()=>openSearch("YouTube")} style={s.quick}><Text style={s.quickText}>Browse YouTube ↗</Text></Pressable></View>
   {error?<Text style={s.note}>{error}</Text>:null}
-  {items.map(item=><Pressable key={item.platform+item.id} onPress={()=>Linking.openURL(item.url).catch(()=>{})} style={s.mediaCard}><View style={[s.mediaIcon,{backgroundColor:item.platform==="Twitch"?"#6541A5":"#B91C1C"}]}>{item.platform==="Twitch"?<Twitch color="#fff" size={19}/>:<Youtube color="#fff" size={19}/>}</View><View style={{flex:1}}><Text style={s.gameName} numberOfLines={2}>{item.title}</Text><Text style={s.tiny}>{item.platform} · {item.creator}{item.live?" · LIVE NOW":""}</Text></View><ExternalLink color={C.lav} size={17}/></Pressable>)}
+  {items.map(item=><Pressable key={item.platform+item.id} onPress={()=>Linking.openURL(item.url).catch(()=>{})} style={s.mediaCard}><View style={[s.mediaIcon,{backgroundColor:item.platform==="Twitch"?"#6541A5":"#B91C1C"}]}>{item.platform==="Twitch"?<Tv color="#fff" size={19}/>:<Youtube color="#fff" size={19}/>}</View><View style={{flex:1}}><Text style={s.gameName} numberOfLines={2}>{item.title}</Text><Text style={s.tiny}>{item.platform} · {item.creator}{item.live?" · LIVE NOW":""}</Text></View><ExternalLink color={C.lav} size={17}/></Pressable>)}
   <View style={s.apiBox}><Text style={s.subheading}>OPTIONAL API CONNECTIONS</Text><Text style={s.tiny}>For in-app result lists, add your own free developer credentials. These are saved securely on this device.</Text>
    <TextInput value={youtubeKey} onChangeText={setYoutubeKey} placeholder="YouTube Data API key" placeholderTextColor={C.muted} secureTextEntry style={s.input}/>
    <TextInput value={twitchId} onChangeText={setTwitchId} placeholder="Twitch Client ID" placeholderTextColor={C.muted} style={s.input}/>
