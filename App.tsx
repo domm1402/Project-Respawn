@@ -162,7 +162,7 @@ function GamesScreen() {
     if (!backendConfigured) return;
     try {
       const rows = await listPlatformConnections();
-      setConnections(Object.fromEntries(rows.map(row => [row.provider, row])));
+      setConnections(Object.fromEntries(rows.map((row: any) => [row.provider, row])));
     } catch {}
   }
 
